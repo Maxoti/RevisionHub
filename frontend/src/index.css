@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Work Sans', sans-serif;
+  color: #211F1B;
+}
+
+/* Ruled-exercise-book underline used under section titles */
+.rule-underline {
+  background-image: repeating-linear-gradient(
+    to right,
+    #6B665C 0,
+    #6B665C 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  height: 2px;
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-pop-in {
+  animation: pop-in 0.18s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop-in { animation: none; }
+}

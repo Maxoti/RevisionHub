@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Admin — Upload Exam Paper</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; max-width: 520px; margin: 3rem auto; padding: 0 1rem; color: #1a1a1a; }
+  h2 { margin-bottom: 1.5rem; }
+  label { display: block; margin-top: 1rem; font-weight: 600; font-size: 0.875rem; }
+  input, select, textarea {
+    width: 100%; padding: 0.5rem 0.75rem; margin-top: 0.25rem;
+    border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem;
+  }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .checkbox-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; }
+  .checkbox-row input { width: auto; }
+  button {
+    margin-top: 1.5rem; width: 100%; padding: 0.75rem;
+    background: #16302A; color: white; border: none;
+    border-radius: 4px; font-size: 1rem; cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  #status { margin-top: 1rem; font-weight: 600; padding: 0.75rem; border-radius: 4px; }
+  #status.ok  { background: #d4edda; color: #155724; }
+  #status.err { background: #f8d7da; color: #721c24; }
+  .hint { font-size: 0.75rem; color: #666; margin-top: 0.2rem; }
+</style>
+</head>
+<body>
+  <h2>Upload Exam Paper</h2>
+
+  <div id="upload-form">
+    <!-- Admin credentials -->
+    <div class="row">
+      <div>
+        <label>Admin username</label>
+        <input id="admin-user" autocomplete="username" />
+      </div>
+      <div>
+        <label>Admin password</label>
+        <input id="admin-pass" type="password" autocomplete="current-password" />
+      </div>
+    </div>
+
+    <hr style="margin-top:1.5rem;border-color:#eee" />
+
+    <!-- Classification -->
+    <label>Curriculum</label>
+    <select id="curriculum">
+      <option value="">-- Select --</option>
+      <option value="CBC">CBC (PP1–Grade 10)</option>
+      <option value="844">8-4-4 (Form 1–4)</option>
+    </select>
+
+    <label>Grade / Class</label>
+    <select id="grade">
+      <option value="">-- Select curriculum first --</option>
+    </select>
+
+    <label>Subject <span style="font-weight:400">(leave blank for Full Set bundle)</span></label>
+    <input id="subject" placeholder="e.g. Mathematics" />
+
+    <div class="row">
+      <div>
+        <label>Exam type</label>
+        <select id="exam_type">
+          <option value="">-- Select --</option>
+          <option value="Opener">Opener</option>
+          <option value="Mid Term">Mid Term</option>
+          <option value="End Term">End Term</option>
+        </select>
+      </div>
+      <div>
+        <label>Term</label>
+        <select id="term">
+          <option value="">-- Select --</option>
+          <option value="1">Term 1</option>
+          <option value="2">Term 2</option>
+          <option value="3">Term 3</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Year</label>
+        <input id="year" type="number" placeholder="2026" value="2026" />
+      </div>
+      <div>
+        <label>Price (KES)</label>
+        <input id="price" type="number" placeholder="50" />
+      </div>
+    </div>
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="is_bundle" />
+      <label for="is_bundle" style="margin-top:0">This is a Full Set bundle (all subjects)</label>
+    </div>
+    <p class="hint">Full Set bundles should be uploaded as a .zip file containing all subject PDFs.</p>
+
+    <label>Title (auto-generated, or override)</label>
+    <input id="title" placeholder="e.g. Grade 5 Mathematics Mid Term 2 2026" />
+
+    <label>File (PDF or ZIP for bundles)</label>
+    <input id="file" type="file" accept=".pdf,.zip" />
+
+    <button id="upload-btn" onclick="upload()">Upload Paper</button>
+  </div>
+
+  <p id="status" style="display:none"></p>
+
+  <script>
+    const CBC_GRADES  = ['PP1','PP2','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
+    const FORM_GRADES = ['Form 1','Form 2','Form 3','Form 4'];
+
+    document.getElementById('curriculum').addEventListener('change', function () {
+      const grade = document.getElementById('grade');
+      const options = this.value === 'CBC' ? CBC_GRADES : this.value === '844' ? FORM_GRADES : [];
+      grade.innerHTML = options.length
+        ? options.map(g => `<option value="${g}">${g}</option>`).join('')
+        : '<option value="">-- Select curriculum first --</option>';
+      autoTitle();
+    });
+
+    ['grade','subject','exam_type','term','year','is_bundle'].forEach(id => {
+      document.getElementById(id)?.addEventListener('change', autoTitle);
+      document.getElementById(id)?.addEventListener('input', autoTitle);
+    });
+
+    function autoTitle() {
+      const grade    = document.getElementById('grade').value;
+      const subject  = document.getElementById('subject').value.trim();
+      const examType = document.getElementById('exam_type').value;
+      const term     = document.getElementById('term').value;
+      const year     = document.getElementById('year').value;
+      const bundle   = document.getElementById('is_bundle').checked;
+
+      if (grade && examType && term && year) {
+        const subjectPart = bundle ? 'Full Set' : (subject || '');
+        document.getElementById('title').value =
+          [grade, subjectPart, examType, 'Term', term, year].filter(Boolean).join(' ');
+      }
+    }
+
+    async function upload() {
+      const btn    = document.getElementById('upload-btn');
+      const status = document.getElementById('status');
+      const user   = document.getElementById('admin-user').value;
+      const pass   = document.getElementById('admin-pass').value;
+
+      const formData = new FormData();
+      formData.append('title',      document.getElementById('title').value);
+      formData.append('curriculum', document.getElementById('curriculum').value);
+      formData.append('grade',      document.getElementById('grade').value);
+      formData.append('subject',    document.getElementById('subject').value);
+      formData.append('exam_type',  document.getElementById('exam_type').value);
+      formData.append('term',       document.getElementById('term').value);
+      formData.append('year',       document.getElementById('year').value);
+      formData.append('price',      document.getElementById('price').value);
+      formData.append('is_bundle',  document.getElementById('is_bundle').checked);
+      const fileInput = document.getElementById('file');
+      if (fileInput.files[0]) formData.append('file', fileInput.files[0]);
+
+      btn.disabled = true;
+      btn.textContent = 'Uploading…';
+      status.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/admin/papers', {
+          method: 'POST',
+          headers: { Authorization: 'Basic ' + btoa(`${user}:${pass}`) },
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Upload failed');
+        status.className = 'ok';
+        status.textContent = `Uploaded successfully — Paper ID ${data.id}`;
+        document.getElementById('file').value = '';
+      } catch (err) {
+        status.className = 'err';
+        status.textContent = 'Error: ' + err.message;
+      } finally {
+        status.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Upload Paper';
+      }
+    }
+  </script>
+</body>
+</html>
