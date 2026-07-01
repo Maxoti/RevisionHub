@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import type { Paper } from '../types';
 import { createPurchase, getPurchaseStatus, downloadUrl } from '../api';
 
-const WHATSAPP_NUMBER = '2547XXXXXXXX';
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '254707244664';
 const PHONE_REGEX = /^0[71]\d{8}$/;
 
 type Step = 'choose' | 'waiting' | 'success' | 'error';

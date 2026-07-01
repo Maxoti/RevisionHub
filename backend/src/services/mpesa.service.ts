@@ -76,20 +76,20 @@ export async function triggerStkPush({
   const { data } = await axios.post(
     `${BASE_URL}/mpesa/stkpush/v1/processrequest`,
     {
-      BusinessShortCode: MPESA_SHORTCODE,
-      Password: password,
-      Timestamp: timestamp,
-      TransactionType: MPESA_ENV === 'production'
-      ?'CustomerBuyGoodsOnline'
-      :'CustomerPayBillOnline',
-      Amount: amount,
-      PartyA: formatPhone(phone),
-      PartyB: MPESA_ENV === 'production' ? MPESA_SHORTCODE : '174379',
-      PhoneNumber: formatPhone(phone),
-      CallBackURL: MPESA_CALLBACK_URL,
-      AccountReference: `PUR${purchaseId}`,
-      TransactionDesc: paperTitle.slice(0, 13),
-    },
+     
+  BusinessShortCode: MPESA_SHORTCODE,  // 4676355
+  Password: password,
+  Timestamp: timestamp,
+  TransactionType: 'CustomerBuyGoodsOnline',
+  Amount: amount,
+  PartyA: formatPhone(phone),
+  PartyB: '4800959',                   // till number
+  PhoneNumber: formatPhone(phone),
+  CallBackURL: MPESA_CALLBACK_URL,
+  AccountReference: `PUR${purchaseId}`,
+  TransactionDesc: paperTitle.slice(0, 13),
+},
+    
     { headers: { Authorization: `Bearer ${token}` } }
   );
   return data;

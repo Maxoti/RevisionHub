@@ -51,7 +51,7 @@ export default function App() {
     [...CBC_GRADES, ...FORM_GRADES];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
 
       {/* Header */}
       <header className="bg-[#1A56DB] text-white py-10 px-6 text-center">
@@ -65,12 +65,12 @@ export default function App() {
       </header>
 
       {/* Filters */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="bg-white border-b border-gray-200 px-4 py-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <select
             value={filters.curriculum}
             onChange={(e) => setFilter('curriculum', e.target.value as Curriculum | '')}
-            className="border border-gray-200 bg-white rounded-sm px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-[#1A56DB]"
+            className="border border-gray-200 bg-white rounded-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1A56DB]"
           >
             <option value="">All Curricula</option>
             <option value="CBC">CBC</option>
@@ -80,7 +80,7 @@ export default function App() {
           <select
             value={filters.grade}
             onChange={(e) => setFilter('grade', e.target.value)}
-            className="border border-gray-200 bg-white rounded-sm px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-[#1A56DB]"
+            className="border border-gray-200 bg-white rounded-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1A56DB]"
           >
             <option value="">All Grades</option>
             {gradeOptions.map((g) => <option key={g} value={g}>{g}</option>)}
@@ -89,7 +89,7 @@ export default function App() {
           <select
             value={filters.exam_type}
             onChange={(e) => setFilter('exam_type', e.target.value as ExamType | '')}
-            className="border border-gray-200 bg-white rounded-sm px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-[#1A56DB]"
+            className="border border-gray-200 bg-white rounded-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1A56DB]"
           >
             <option value="">All Exam Types</option>
             {EXAM_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -98,7 +98,7 @@ export default function App() {
           <select
             value={filters.term}
             onChange={(e) => setFilter('term', e.target.value as Term | '')}
-            className="border border-gray-200 bg-white rounded-sm px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-[#1A56DB]"
+            className="border border-gray-200 bg-white rounded-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1A56DB]"
           >
             <option value="">All Terms</option>
             {TERMS.map((t) => <option key={t} value={t}>Term {t}</option>)}
@@ -107,16 +107,15 @@ export default function App() {
           <select
             value={filters.year}
             onChange={(e) => setFilter('year', e.target.value)}
-            className="border border-gray-200 bg-white rounded-sm px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-[#1A56DB]"
+            className="border border-gray-200 bg-white rounded-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1A56DB]"
           >
             <option value="">All Years</option>
             {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
 
-        {/* Clear filters */}
         {Object.values(filters).some(Boolean) && (
-          <div className="max-w-5xl mx-auto mt-2 text-right">
+          <div className="mt-2 text-right">
             <button
               onClick={() => setFilters(DEFAULT_FILTERS)}
               className="text-xs text-gray-400 hover:text-gray-600 underline"
@@ -127,13 +126,13 @@ export default function App() {
         )}
       </div>
 
-      {/* Paper grid */}
-      <main className="max-w-5xl mx-auto px-6 py-10">
+      {/* Paper grid — full width, no max-width constraint */}
+      <main className="px-4 py-6">
         {loadState === 'loading' && (
           <p className="text-center text-gray-400">Loading papers…</p>
         )}
         {loadState === 'error' && (
-          <p className="text-center text-stamp">
+          <p className="text-center text-red-500">
             Could not load papers. Refresh to try again.
           </p>
         )}
@@ -143,7 +142,7 @@ export default function App() {
           </p>
         )}
         {loadState === 'ready' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {papers.map((paper) => (
               <PaperCard key={paper.id} paper={paper} onSelect={setSelectedPaper} />
             ))}
