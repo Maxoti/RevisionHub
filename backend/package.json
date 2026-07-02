@@ -4,6 +4,7 @@
   "private": true,
   "main": "src/server.ts",
   "scripts": {
+    "build": "tsc",
     "start": "node src/server.ts",
     "dev": "nodemon --exec tsx src/server.ts"
   },
