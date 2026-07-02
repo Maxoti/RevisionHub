@@ -6,7 +6,11 @@ import type {
   CreatePurchaseResponse,
 } from './types';
 
-const client = axios.create({ baseURL: '/api' });
+const BASE_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : '/api';
+
+const client = axios.create({ baseURL: BASE_URL });
 
 export async function fetchPapers(filters?: Partial<PaperFilters>): Promise<Paper[]> {
   const params: Record<string, string> = {};
@@ -42,5 +46,5 @@ export async function getPurchaseStatus(
 }
 
 export function downloadUrl(token: string): string {
-  return `/api/download/${token}`;
+  return `${BASE_URL}/download/${token}`;
 }
