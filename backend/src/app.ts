@@ -10,13 +10,7 @@ app.use(express.json());
 
 app.use('/api', routes);
 
-// Serve the built React frontend (run `npm run build` in /frontend first)
-app.use(express.static(path.join(__dirname, '../../frontend/dist')));
-app.get(/^(?!\/api|\/admin).*/, (_req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
-});
-
-// Serve the static admin upload page (still gated by adminAuth on the API call itself)
+// Serve the static admin upload page
 app.use('/admin', express.static(path.join(__dirname, '../../admin')));
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
