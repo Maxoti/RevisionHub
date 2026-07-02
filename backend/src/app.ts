@@ -5,7 +5,14 @@ import routes from './routes';
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://revisionhub.co.ke',
+    'https://www.revisionhub.co.ke',
+    'http://localhost:5173'
+  ]
+}));
+
 app.use(express.json());
 
 app.use('/api', routes);
