@@ -8,7 +8,7 @@ function adminAuth(req: Request, res: Response, next: NextFunction): void {
 
   if (!header || !header.startsWith('Basic ')) {
     res.set('WWW-Authenticate', 'Basic realm="Admin"');
-    res.status(401).send('Authentication required');
+    res.status(401).json({ error: 'Authentication required' });
     return;
   }
 
@@ -20,7 +20,7 @@ function adminAuth(req: Request, res: Response, next: NextFunction): void {
   }
 
   res.set('WWW-Authenticate', 'Basic realm="Admin"');
-  res.status(401).send('Invalid credentials');
+  res.status(401).json({ error: 'Invalid credentials' });
 }
 
 export default adminAuth;

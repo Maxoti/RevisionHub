@@ -5,6 +5,7 @@ import { listPapers, createPaper } from '../controllers/papers.controller';
 import { createPurchase, getPurchaseStatus } from '../controllers/purchases.controller';
 import { mpesaCallback } from '../controllers/mpesa.controller';
 import { downloadByToken } from '../controllers/download.controller';
+import { getPaymentHistory } from '../controllers/adminPayments.controller';
 
 const router = express.Router();
 
@@ -18,6 +19,9 @@ router.get('/papers', listPapers);
 
 // Admin — upload a paper or bundle (Basic Auth)
 router.post('/admin/papers', adminAuth, upload.single('file'), createPaper);
+
+// Admin — payment history lookup (Basic Auth)
+router.get('/admin/payment-history', adminAuth, getPaymentHistory);
 
 // Purchase flow
 router.post('/purchases', createPurchase);

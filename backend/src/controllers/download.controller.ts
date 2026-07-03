@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import pool from '../config/db';
 import { getSignedDownloadUrl } from '../services/storage.service';
+import { logPaymentEvent } from '../services/paymentLog.service';
 
 // GET /api/download/:token
 // Validates the token is unexpired and unused, then redirects to a
@@ -13,16 +14,20 @@ export async function downloadByToken(req: Request, res: Response): Promise<void
     await client.query('BEGIN');
 
     const { rows } = await client.query(
-      `SELECT p.id, p.token_expires_at, p.token_used, pa.file_key
+      `SELECT p.id, p.phone_number, p.token_expires_at, p.token_used, pa.file_key
        FROM purchases p
        JOIN papers pa ON pa.id = p.paper_id
        WHERE p.download_token = $1 AND p.status = 'completed'
-       FOR UPDATE`,
+       FOR UPDATE OF p`,
       [token]
     );
 
     if (rows.length === 0) {
       await client.query('ROLLBACK');
+      await logPaymentEvent({
+        eventType: 'download_attempt',
+        payload: { token, result: 'not_found' },
+      });
       res.status(404).json({ error: 'Invalid or unrecognised link' });
       return;
     }
@@ -31,12 +36,24 @@ export async function downloadByToken(req: Request, res: Response): Promise<void
 
     if (purchase.token_used) {
       await client.query('ROLLBACK');
+      await logPaymentEvent({
+        purchaseId: purchase.id,
+        phoneNumber: purchase.phone_number,
+        eventType: 'download_attempt',
+        payload: { token, result: 'already_used' },
+      });
       res.status(410).json({ error: 'This download link has already been used' });
       return;
     }
 
     if (new Date() > new Date(purchase.token_expires_at)) {
       await client.query('ROLLBACK');
+      await logPaymentEvent({
+        purchaseId: purchase.id,
+        phoneNumber: purchase.phone_number,
+        eventType: 'download_attempt',
+        payload: { token, result: 'expired' },
+      });
       res.status(410).json({ error: 'This download link has expired' });
       return;
     }
@@ -47,11 +64,22 @@ export async function downloadByToken(req: Request, res: Response): Promise<void
     );
     await client.query('COMMIT');
 
+    await logPaymentEvent({
+      purchaseId: purchase.id,
+      phoneNumber: purchase.phone_number,
+      eventType: 'download_attempt',
+      payload: { token, result: 'success' },
+    });
+
     const url = await getSignedDownloadUrl(purchase.file_key, 120);
     res.redirect(url);
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Download error:', err);
+    await logPaymentEvent({
+      eventType: 'download_error',
+      payload: { token, error: err instanceof Error ? err.message : String(err) },
+    });
     res.status(500).json({ error: 'Something went wrong' });
   } finally {
     client.release();

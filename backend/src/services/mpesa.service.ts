@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import pool from '../config/db';
 import { getSignedDownloadUrl } from './storage.service';
 import { notifyBuyer } from './notifications.service';
+import { logPaymentEvent } from './paymentLog.service';
 
 const {
   MPESA_CONSUMER_KEY,
@@ -73,26 +74,53 @@ export async function triggerStkPush({
     `${MPESA_SHORTCODE}${MPESA_PASSKEY}${timestamp}`
   ).toString('base64');
 
-  const { data } = await axios.post(
-    `${BASE_URL}/mpesa/stkpush/v1/processrequest`,
-    {
-     
-  BusinessShortCode: MPESA_SHORTCODE,  // 4676355
-  Password: password,
-  Timestamp: timestamp,
-  TransactionType: 'CustomerBuyGoodsOnline',
-  Amount: amount,
-  PartyA: formatPhone(phone),
-  PartyB: '4800959',                   // till number
-  PhoneNumber: formatPhone(phone),
-  CallBackURL: MPESA_CALLBACK_URL,
-  AccountReference: `PUR${purchaseId}`,
-  TransactionDesc: paperTitle.slice(0, 13),
-},
-    
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  return data;
+  const requestBody = {
+    BusinessShortCode: MPESA_SHORTCODE,
+    Password: password,
+    Timestamp: timestamp,
+    TransactionType: 'CustomerBuyGoodsOnline',
+    Amount: amount,
+    PartyA: formatPhone(phone),
+    PartyB: '4800959',
+    PhoneNumber: formatPhone(phone),
+    CallBackURL: MPESA_CALLBACK_URL,
+    AccountReference: `PUR${purchaseId}`,
+    TransactionDesc: paperTitle.slice(0, 13),
+  };
+
+  await logPaymentEvent({
+    purchaseId,
+    phoneNumber: phone,
+    eventType: 'stk_request',
+    payload: requestBody,
+  });
+
+  try {
+    const { data } = await axios.post(
+      `${BASE_URL}/mpesa/stkpush/v1/processrequest`,
+      requestBody,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    await logPaymentEvent({
+      purchaseId,
+      checkoutRequestId: data.CheckoutRequestID,
+      phoneNumber: phone,
+      eventType: 'stk_response',
+      payload: data,
+    });
+
+    return data;
+  } catch (err: unknown) {
+    const error = err as { response?: { data: unknown }; message: string };
+    await logPaymentEvent({
+      purchaseId,
+      phoneNumber: phone,
+      eventType: 'stk_error',
+      payload: error.response?.data || { message: error.message },
+    });
+    throw err;
+  }
 }
 
 export async function handleStkCallback(callbackBody: unknown): Promise<void> {
@@ -101,15 +129,25 @@ export async function handleStkCallback(callbackBody: unknown): Promise<void> {
       stkCallback?: {
         CheckoutRequestID: string;
         ResultCode: number;
+        ResultDesc?: string;
         CallbackMetadata?: { Item: { Name: string; Value: unknown }[] };
       };
     };
   };
 
   const stkCallback = body?.Body?.stkCallback;
+
+  // Log the raw callback unconditionally, before any validation —
+  // guarantees we never lose evidence of what Safaricom actually sent.
+  await logPaymentEvent({
+    checkoutRequestId: stkCallback?.CheckoutRequestID || null,
+    eventType: 'callback_received',
+    payload: callbackBody,
+  });
+
   if (!stkCallback) throw new Error('Malformed STK callback payload');
 
-  const { CheckoutRequestID, ResultCode, CallbackMetadata } = stkCallback;
+  const { CheckoutRequestID, ResultCode, ResultDesc, CallbackMetadata } = stkCallback;
 
   const client = await pool.connect();
   try {
@@ -119,12 +157,17 @@ export async function handleStkCallback(callbackBody: unknown): Promise<void> {
       `SELECT pu.*, pa.title AS paper_title, pa.file_key
        FROM purchases pu
        JOIN papers pa ON pa.id = pu.paper_id
-       WHERE pu.checkout_request_id = $1 FOR UPDATE`,
+       WHERE pu.checkout_request_id = $1 FOR UPDATE OF pu`,
       [CheckoutRequestID]
     );
 
     if (rows.length === 0) {
       await client.query('ROLLBACK');
+      await logPaymentEvent({
+        checkoutRequestId: CheckoutRequestID,
+        eventType: 'callback_error',
+        payload: { reason: 'Unknown CheckoutRequestID', ResultCode },
+      });
       console.warn('Callback for unknown CheckoutRequestID:', CheckoutRequestID);
       return;
     }
@@ -133,6 +176,13 @@ export async function handleStkCallback(callbackBody: unknown): Promise<void> {
 
     if (purchase.status === 'completed') {
       await client.query('ROLLBACK');
+      await logPaymentEvent({
+        purchaseId: purchase.id,
+        checkoutRequestId: CheckoutRequestID,
+        phoneNumber: purchase.phone_number,
+        eventType: 'callback_duplicate',
+        payload: { ResultCode },
+      });
       return; // Already processed — Safaricom retry
     }
 
@@ -142,6 +192,13 @@ export async function handleStkCallback(callbackBody: unknown): Promise<void> {
         [purchase.id]
       );
       await client.query('COMMIT');
+      await logPaymentEvent({
+        purchaseId: purchase.id,
+        checkoutRequestId: CheckoutRequestID,
+        phoneNumber: purchase.phone_number,
+        eventType: 'callback_failed',
+        payload: { ResultCode, ResultDesc },
+      });
       return;
     }
 
@@ -164,6 +221,14 @@ export async function handleStkCallback(callbackBody: unknown): Promise<void> {
 
     await client.query('COMMIT');
 
+    await logPaymentEvent({
+      purchaseId: purchase.id,
+      checkoutRequestId: CheckoutRequestID,
+      phoneNumber: purchase.phone_number,
+      eventType: 'callback_processed',
+      payload: { receipt, ResultCode },
+    });
+
     // ── Fire notifications outside the transaction ──────────────────
     const signedUrl = await getSignedDownloadUrl(purchase.file_key, 24 * 60 * 60);
 
@@ -176,6 +241,11 @@ export async function handleStkCallback(callbackBody: unknown): Promise<void> {
 
   } catch (err) {
     await client.query('ROLLBACK');
+    await logPaymentEvent({
+      checkoutRequestId: CheckoutRequestID,
+      eventType: 'callback_error',
+      payload: { error: err instanceof Error ? err.message : String(err) },
+    });
     throw err;
   } finally {
     client.release();
