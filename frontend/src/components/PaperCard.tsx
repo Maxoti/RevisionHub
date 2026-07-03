@@ -20,8 +20,9 @@ export default function PaperCard({ paper, onSelect }: Props) {
 
       {/* Price stamp */}
       <div className="absolute top-3 right-3 bg-stamp text-white font-mono text-xs font-bold px-2 py-1 rounded-sm shadow-sm">
-        KES {paper.price}
-      </div>
+  KES {paper.price}
+</div>
+  
 
       <div className="p-5 pt-8">
         {/* Curriculum + year */}
