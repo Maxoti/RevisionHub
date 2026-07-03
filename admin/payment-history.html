@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — Payment History</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: system-ui, sans-serif;
+    color: #1a1a1a;
+    background: #fafafa;
+    min-height: 100vh;
+    width: 100%;
+    padding: 3rem 4rem;
+  }
+  .card { max-width: 900px; margin: 0 auto; }
+  h2 { margin: 0 0 0.25rem; color: #0a7d2c; font-size: 1.5rem; }
+  .subtitle { margin: 0 0 1.5rem; color: #666; font-size: 0.85rem; }
+
+  .search-row { display: flex; gap: 0.75rem; margin-bottom: 2rem; }
+  input {
+    flex: 1; padding: 0.6rem 0.75rem;
+    border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;
+  }
+  input:focus { outline: none; border-color: #00a651; box-shadow: 0 0 0 3px rgba(0,166,81,0.15); }
+
+  button {
+    padding: 0.6rem 1.5rem;
+    background: linear-gradient(180deg, #00b85c 0%, #008f45 100%);
+    color: white; border: none; border-radius: 6px;
+    font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .auth-row { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
+  .auth-row input { flex: 1; }
+
+  .purchase-card {
+    background: #fff; border: 1px solid #e5e5e5; border-radius: 8px;
+    padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .purchase-header {
+    display: flex; justify-content: space-between; align-items: start;
+    margin-bottom: 0.75rem;
+  }
+  .purchase-title { font-weight: 700; font-size: 1rem; }
+  .status-badge {
+    padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700;
+    text-transform: uppercase;
+  }
+  .status-completed { background: #e3f7ea; color: #0a7d2c; }
+  .status-pending   { background: #fff8e1; color: #a67c00; }
+  .status-failed    { background: #fbe9e9; color: #a4282c; }
+
+  .detail-row {
+    display: grid; grid-template-columns: 140px 1fr;
+    padding: 0.35rem 0; font-size: 0.85rem;
+    border-bottom: 1px solid #f2f2f2;
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { color: #888; }
+  .detail-value { color: #1a1a1a; word-break: break-all; }
+
+  .events-toggle {
+    margin-top: 0.75rem; font-size: 0.8rem; color: #00a651;
+    cursor: pointer; font-weight: 600;
+  }
+  .events-list { display: none; margin-top: 0.75rem; }
+  .events-list.open { display: block; }
+
+  .event-item {
+    padding: 0.6rem 0.75rem; margin-bottom: 0.5rem;
+    background: #f7f7f7; border-radius: 6px; font-size: 0.8rem;
+  }
+  .event-type {
+    font-weight: 700; text-transform: uppercase; font-size: 0.7rem;
+    color: #444; margin-bottom: 0.25rem;
+  }
+  .event-time { color: #999; font-size: 0.75rem; }
+  .event-payload {
+    margin-top: 0.4rem; font-family: monospace; font-size: 0.75rem;
+    color: #555; white-space: pre-wrap; word-break: break-all;
+  }
+
+  #status { margin-top: 1rem; font-weight: 600; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; }
+  #status.err { background: #fbe9e9; color: #a4282c; border: 1px solid #f1c4c4; }
+  #empty { color: #888; font-size: 0.9rem; margin-top: 1rem; }
+
+  @media (max-width: 700px) {
+    body { padding: 2rem 1.25rem; }
+    .search-row, .auth-row { flex-direction: column; }
+    .detail-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h2>Payment History Lookup</h2>
+    <p class="subtitle">RevisionHub Admin</p>
+
+    <div class="auth-row">
+      <input id="admin-user" placeholder="Admin username" autocomplete="username" />
+      <input id="admin-pass" type="password" placeholder="Admin password" autocomplete="current-password" />
+    </div>
+
+    <div class="search-row">
+      <input id="search-input" placeholder="Phone number e.g. 0729871381" />
+      <button id="search-btn" onclick="search()">Search</button>
+    </div>
+
+    <p id="status" style="display:none"></p>
+    <p id="empty" style="display:none">No purchases found for this number.</p>
+    <div id="results"></div>
+  </div>
+
+  <script>
+    async function search() {
+      const btn = document.getElementById('search-btn');
+      const status = document.getElementById('status');
+      const empty = document.getElementById('empty');
+      const results = document.getElementById('results');
+      const user = document.getElementById('admin-user').value;
+      const pass = document.getElementById('admin-pass').value;
+      const phone = document.getElementById('search-input').value.trim();
+
+      status.style.display = 'none';
+      empty.style.display = 'none';
+      results.innerHTML = '';
+
+      if (!phone) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Searching…';
+
+      try {
+        const res = await fetch(`/api/admin/payment-history?phone=${encodeURIComponent(phone)}`, {
+          headers: { Authorization: 'Basic ' + btoa(`${user}:${pass}`) },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Search failed');
+
+        if (data.purchases.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        results.innerHTML = data.purchases.map(p => renderPurchase(p, data.events)).join('');
+      } catch (err) {
+        status.className = 'err';
+        status.textContent = 'Error: ' + err.message;
+        status.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Search';
+      }
+    }
+
+    function renderPurchase(p, allEvents) {
+      const events = allEvents.filter(e => e.purchase_id === p.id || e.checkout_request_id === p.checkout_request_id);
+      const statusClass = `status-${p.status}`;
+      const eventsId = `events-${p.id}`;
+
+      return `
+        <div class="purchase-card">
+          <div class="purchase-header">
+            <div class="purchase-title">${p.paper_title}</div>
+            <span class="status-badge ${statusClass}">${p.status}</span>
+          </div>
+          <div class="detail-row"><span class="detail-label">Amount</span><span class="detail-value">KES ${p.amount}</span></div>
+          <div class="detail-row"><span class="detail-label">M-Pesa Receipt</span><span class="detail-value">${p.mpesa_receipt || '—'}</span></div>
+          <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">${p.phone_number}</span></div>
+          <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${p.email || '—'}</span></div>
+          <div class="detail-row"><span class="detail-label">Checkout ID</span><span class="detail-value">${p.checkout_request_id || '—'}</span></div>
+          <div class="detail-row"><span class="detail-label">Download used</span><span class="detail-value">${p.token_used ? 'Yes' : 'No'}</span></div>
+          <div class="detail-row"><span class="detail-label">Purchased</span><span class="detail-value">${new Date(p.created_at).toLocaleString()}</span></div>
+          <div class="detail-row"><span class="detail-label">Last updated</span><span class="detail-value">${new Date(p.updated_at).toLocaleString()}</span></div>
+
+          <div class="events-toggle" onclick="toggleEvents('${eventsId}')">▸ View ${events.length} event(s)</div>
+          <div class="events-list" id="${eventsId}">
+            ${events.map(e => `
+              <div class="event-item">
+                <div class="event-type">${e.event_type}</div>
+                <div class="event-time">${new Date(e.created_at).toLocaleString()}</div>
+                <div class="event-payload">${JSON.stringify(e.payload, null, 2)}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleEvents(id) {
+      document.getElementById(id).classList.toggle('open');
+    }
+
+    document.getElementById('search-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') search();
+    });
+  </script>
+</body>
+</html>
