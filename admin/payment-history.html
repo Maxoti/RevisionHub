@@ -15,15 +15,14 @@
     width: 100%;
     padding: 3rem 4rem;
   }
-  .card { max-width: 100%px; }
+  .card { width: 100%; }
+
+  @media (min-width: 701px) {
+    .card { max-width: 1100px; margin: 0 auto; }
+  }
+
   h2 { margin: 0 0 0.25rem; color: #0a7d2c; font-size: 1.5rem; }
   .subtitle { margin: 0 0 1.5rem; color: #666; font-size: 0.85rem; }
-
-  #results {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-  gap: 1rem;
-}
 
   .search-row { display: flex; gap: 0.75rem; margin-bottom: 2rem; }
   input {
@@ -43,6 +42,12 @@
   .auth-row { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
   .auth-row input { flex: 1; }
 
+  #results {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 1rem;
+  }
+
   .purchase-card {
     background: #fff; border: 1px solid #e5e5e5; border-radius: 8px;
     padding: 1.25rem; margin-bottom: 1rem;
@@ -50,11 +55,14 @@
   .purchase-header {
     display: flex; justify-content: space-between; align-items: start;
     margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
   .purchase-title { font-weight: 700; font-size: 1rem; }
   .status-badge {
     padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700;
     text-transform: uppercase;
+    white-space: nowrap;
   }
   .status-completed { background: #e3f7ea; color: #0a7d2c; }
   .status-pending   { background: #fff8e1; color: #a67c00; }
@@ -95,9 +103,10 @@
   #empty { color: #888; font-size: 0.9rem; margin-top: 1rem; }
 
   @media (max-width: 700px) {
-    body { padding: 2rem 1rem; }
+    body { padding: 2rem 1.25rem; }
     .search-row, .auth-row { flex-direction: column; }
     .detail-row { grid-template-columns: 1fr; }
+    #results { grid-template-columns: 1fr; }
   }
 </style>
 </head>
