@@ -27,7 +27,7 @@ async function getAccessToken(): Promise<string> {
   const auth = Buffer.from(`${MPESA_CONSUMER_KEY}:${MPESA_CONSUMER_SECRET}`).toString('base64');
   const { data } = await axios.get(
     `${BASE_URL}/oauth/v1/generate?grant_type=client_credentials`,
-    { headers: { Authorization: `Basic ${auth}` } }
+    { headers: { Authorization: `Basic ${auth}` }, timeout: 8000 }
   );
   cachedToken = data.access_token;
   tokenExpiresAt = Date.now() + (parseInt(data.expires_in, 10) - 60) * 1000;
@@ -99,7 +99,7 @@ export async function triggerStkPush({
     const { data } = await axios.post(
       `${BASE_URL}/mpesa/stkpush/v1/processrequest`,
       requestBody,
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 }
     );
 
     await logPaymentEvent({
