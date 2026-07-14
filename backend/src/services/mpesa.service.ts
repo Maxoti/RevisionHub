@@ -81,7 +81,7 @@ export async function triggerStkPush({
     TransactionType: 'CustomerBuyGoodsOnline',
     Amount: amount,
     PartyA: formatPhone(phone),
-    PartyB: '4800959',
+    PartyB: '4968315',
     PhoneNumber: formatPhone(phone),
     CallBackURL: MPESA_CALLBACK_URL,
     AccountReference: `PUR${purchaseId}`,
