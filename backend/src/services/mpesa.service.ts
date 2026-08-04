@@ -88,12 +88,13 @@ export async function triggerStkPush({
     TransactionDesc: paperTitle.slice(0, 13),
   };
 
-  await logPaymentEvent({
+  // Fire-and-forget: don't block the STK push on this write.
+  logPaymentEvent({
     purchaseId,
     phoneNumber: phone,
     eventType: 'stk_request',
     payload: requestBody,
-  });
+  }).catch((err) => console.error('[logPaymentEvent stk_request]', err));
 
   try {
     const { data } = await axios.post(
@@ -102,23 +103,29 @@ export async function triggerStkPush({
       { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 }
     );
 
-    await logPaymentEvent({
+    // Fire-and-forget here too — response already returned by Safaricom,
+    // no reason to make the caller wait on a log write.
+    logPaymentEvent({
       purchaseId,
       checkoutRequestId: data.CheckoutRequestID,
       phoneNumber: phone,
       eventType: 'stk_response',
       payload: data,
-    });
+    }).catch((err) => console.error('[logPaymentEvent stk_response]', err));
 
     return data;
   } catch (err: unknown) {
     const error = err as { response?: { data: unknown }; message: string };
-    await logPaymentEvent({
+
+    // This one's arguably worth awaiting since we're already in the error
+    // path and about to throw — but even here it's not strictly required.
+    logPaymentEvent({
       purchaseId,
       phoneNumber: phone,
       eventType: 'stk_error',
       payload: error.response?.data || { message: error.message },
-    });
+    }).catch((logErr) => console.error('[logPaymentEvent stk_error]', logErr));
+
     throw err;
   }
 }
