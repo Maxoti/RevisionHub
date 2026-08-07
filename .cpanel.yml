@@ -1,12 +1,12 @@
 ---
 deployment:
   tasks:
-    # Deploy compiled frontend files to the public_html directory
-    - export FRONTEND_DEST=/home3/mwalimua/public_html/
-    - /bin/cp -R frontend/dist/* $FRONTEND_DEST
+    # 1. Deploy compiled frontend files to public_html
+    - /bin/cp -R frontend/dist/* /home3/mwalimua/public_html/
 
-    # Deploy backend files to the backend directory
-    - export BACKEND_DEST=/home3/mwalimua/backend/
-    - /bin/cp -R backend/dist/* $BACKEND_DEST
-    - /bin/cp -R backend/package.json $BACKEND_DEST
-    - /bin/cp -R backend/package-lock.json $BACKEND_DEST
+    # 2. Deploy backend dist folder (so it keeps the 'dist' folder structure for your server.js startup file)
+    - /bin/cp -R backend/dist /home3/mwalimua/backend/
+
+    # 3. Deploy configuration files to the backend root directory
+    - /bin/cp backend/package.json /home3/mwalimua/backend/
+    - /bin/cp backend/package-lock.json /home3/mwalimua/backend/
