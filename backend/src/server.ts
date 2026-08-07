@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import app from './app';
+import keepAlive from './jobs/keepAlive';
 
 const PORT = process.env.PORT || 3000;
 
@@ -16,3 +17,5 @@ console.log('=======================');
 app.listen(PORT, () => {
   console.log(`revisionhub running on port ${PORT}`);
 });
+
+keepAlive.start();
