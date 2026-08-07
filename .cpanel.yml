@@ -9,4 +9,4 @@ deployment:
 
     # 3. Deploy configuration files to the backend root directory
     - /bin/cp backend/package.json /home3/mwalimua/backend/
-    - /bin/cp backend/package-lock.json /home3/mwalimua/backend/
+    - /bin/cp backend/package-lock.json /home3/mwalimua/backend
