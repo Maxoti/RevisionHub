@@ -9,6 +9,8 @@ app.use(cors({
   origin: [
     'https://revisionhub.co.ke',
     'https://www.revisionhub.co.ke',
+    'https://myassessment.co.ke',
+    'https://www.myassessment.co.ke',
     'http://localhost:5173'
   ]
 }));

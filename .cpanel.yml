@@ -1,0 +1,12 @@
+---
+deployment:
+  tasks:
+    # Deploy compiled frontend files to the public_html directory
+    - export FRONTEND_DEST=/home3/mwalimua/public_html/
+    - /bin/cp -R frontend/dist/* $FRONTEND_DEST
+
+    # Deploy backend files to the backend directory
+    - export BACKEND_DEST=/home3/mwalimua/backend/
+    - /bin/cp -R backend/dist/* $BACKEND_DEST
+    - /bin/cp -R backend/package.json $BACKEND_DEST
+    - /bin/cp -R backend/package-lock.json $BACKEND_DEST

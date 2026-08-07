@@ -13,10 +13,10 @@ backend/.env
 frontend/.env
 
 # --- Build Outputs -----------------------------------------------
-dist/
-build/
-frontend/dist/
-backend/dist/
+#dist/
+#build/
+!frontend/dist/
+!backend/dist/
 
 # --- TypeScript --------------------------------------------------
 *.tsbuildinfo
