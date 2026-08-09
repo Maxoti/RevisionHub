@@ -250,7 +250,7 @@
       status.style.display = 'none';
 
       try {
-        const res = await fetch('/api/admin/papers', {
+        const res = await fetch('https://api.myassessment.co.ke/api/admin/papers', {
           method: 'POST',
           headers: { Authorization: 'Basic ' + btoa(`${user}:${pass}`) },
           body: formData,
