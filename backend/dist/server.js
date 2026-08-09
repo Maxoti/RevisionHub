@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
 const app_1 = __importDefault(require("./app"));
+const keepAlive_1 = __importDefault(require("./jobs/keepAlive"));
 const PORT = process.env.PORT || 3000;
 // Debug env vars on startup
 console.log('=== MPESA ENV CHECK ===');
@@ -18,3 +19,4 @@ console.log('=======================');
 app_1.default.listen(PORT, () => {
     console.log(`revisionhub running on port ${PORT}`);
 });
+keepAlive_1.default.start();

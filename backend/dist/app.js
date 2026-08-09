@@ -14,6 +14,7 @@ app.use((0, cors_1.default)({
         'https://www.revisionhub.co.ke',
         'https://myassessment.co.ke',
         'https://www.myassessment.co.ke',
+        'https://admin.myassessment.co.ke',
         'http://localhost:5173'
     ]
 }));

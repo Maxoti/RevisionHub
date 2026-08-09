@@ -64,31 +64,36 @@ async function triggerStkPush({ phone, amount, purchaseId, paperTitle, }) {
         AccountReference: `PUR${purchaseId}`,
         TransactionDesc: paperTitle.slice(0, 13),
     };
-    await (0, paymentLog_service_1.logPaymentEvent)({
+    // Fire-and-forget: don't block the STK push on this write.
+    (0, paymentLog_service_1.logPaymentEvent)({
         purchaseId,
         phoneNumber: phone,
         eventType: 'stk_request',
         payload: requestBody,
-    });
+    }).catch((err) => console.error('[logPaymentEvent stk_request]', err));
     try {
         const { data } = await axios_1.default.post(`${BASE_URL}/mpesa/stkpush/v1/processrequest`, requestBody, { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 });
-        await (0, paymentLog_service_1.logPaymentEvent)({
+        // Fire-and-forget here too — response already returned by Safaricom,
+        // no reason to make the caller wait on a log write.
+        (0, paymentLog_service_1.logPaymentEvent)({
             purchaseId,
             checkoutRequestId: data.CheckoutRequestID,
             phoneNumber: phone,
             eventType: 'stk_response',
             payload: data,
-        });
+        }).catch((err) => console.error('[logPaymentEvent stk_response]', err));
         return data;
     }
     catch (err) {
         const error = err;
-        await (0, paymentLog_service_1.logPaymentEvent)({
+        // This one's arguably worth awaiting since we're already in the error
+        // path and about to throw — but even here it's not strictly required.
+        (0, paymentLog_service_1.logPaymentEvent)({
             purchaseId,
             phoneNumber: phone,
             eventType: 'stk_error',
             payload: error.response?.data || { message: error.message },
-        });
+        }).catch((logErr) => console.error('[logPaymentEvent stk_error]', logErr));
         throw err;
     }
 }
