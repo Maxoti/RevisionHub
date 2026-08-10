@@ -12,6 +12,34 @@
     margin: 0;
   }
 
+  .password-wrap {
+  position: relative;
+}
+
+.password-wrap input {
+  padding-right: 2.5rem;
+}
+
+.toggle-pass-btn {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  width: auto;
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+}
+
+.toggle-pass-btn:hover {
+  color: #444;
+}
+
   body {
     font-family: system-ui, sans-serif;
     color: #1a1a1a;
@@ -111,10 +139,26 @@
           <label>Admin username</label>
           <input id="admin-user" autocomplete="username" />
         </div>
-        <div>
-          <label>Admin password</label>
-          <input id="admin-pass" type="password" autocomplete="current-password" />
-        </div>
+       <div>
+  <label>Admin username</label>
+  <input id="admin-user" autocomplete="username" />
+</div>
+<div>
+  <label>Admin password</label>
+  <div class="password-wrap">
+    <input id="admin-pass" type="password" autocomplete="current-password" />
+    <button type="button" id="toggle-pass" class="toggle-pass-btn" aria-label="Show password">
+      <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      <svg id="eye-closed" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+        <path d="M17.94 17.94A10.94 10.94 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+        <line x1="1" y1="1" x2="23" y2="23"/>
+      </svg>
+    </button>
+  </div>
+</div>
 
         <hr class="full" />
 
@@ -225,6 +269,18 @@
           [grade, subjectPart, examType, 'Term', term, year].filter(Boolean).join(' ');
       }
     }
+
+    document.getElementById('toggle-pass').addEventListener('click', function () {
+  const input = document.getElementById('admin-pass');
+  const eyeOpen = document.getElementById('eye-open');
+  const eyeClosed = document.getElementById('eye-closed');
+  const isPassword = input.type === 'password';
+
+  input.type = isPassword ? 'text' : 'password';
+  eyeOpen.style.display = isPassword ? 'none' : 'block';
+  eyeClosed.style.display = isPassword ? 'block' : 'none';
+  this.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+});
 
     async function upload() {
       const btn    = document.getElementById('upload-btn');
