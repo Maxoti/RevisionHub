@@ -11,6 +11,13 @@ function adminAuth(req, res, next) {
     }
     const decoded = Buffer.from(header.split(' ')[1], 'base64').toString();
     const [user, pass] = decoded.split(':');
+    // TEMPORARY DEBUG LOGGING — remove after diagnosing credential mismatch
+    console.log('DEBUG adminAuth — env ADMIN_USER:', JSON.stringify(process.env.ADMIN_USER));
+    console.log('DEBUG adminAuth — env ADMIN_PASSWORD:', JSON.stringify(process.env.ADMIN_PASSWORD));
+    console.log('DEBUG adminAuth — received user:', JSON.stringify(user));
+    console.log('DEBUG adminAuth — received pass:', JSON.stringify(pass));
+    console.log('DEBUG adminAuth — user match:', user === process.env.ADMIN_USER);
+    console.log('DEBUG adminAuth — pass match:', pass === process.env.ADMIN_PASSWORD);
     if (user === process.env.ADMIN_USER && pass === process.env.ADMIN_PASSWORD) {
         return next();
     }
