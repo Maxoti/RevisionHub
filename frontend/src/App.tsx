@@ -51,7 +51,7 @@ export default function App() {
     [...CBC_GRADES, ...FORM_GRADES];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <header className="bg-[#1A56DB] text-white py-10 px-6 text-center">
         <div className="inline-flex items-center gap-2 mb-3">
@@ -160,7 +160,7 @@ export default function App() {
       </div>
 
       {/* Paper grid — full width, no max-width constraint */}
-      <main className="px-4 py-6">
+      <main className="px-4 py-6 flex-1">
         {loadState === 'loading' && (
           <p className="text-center text-gray-400">Loading papers…</p>
         )}
