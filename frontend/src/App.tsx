@@ -54,32 +54,48 @@ export default function App() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-[#1A56DB] text-white py-10 px-6 text-center">
-  <div className="inline-flex items-center gap-2 mb-3">
-    <div className="relative w-9 h-9 rounded-lg bg-white flex items-center justify-center">
-      <svg className="w-5 h-5 text-[#1A56DB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-      </svg>
-      <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-600 border-2 border-[#1A56DB] flex items-center justify-center">
-        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-        </svg>
+        <div className="inline-flex items-center gap-2 mb-3">
+          <div className="relative w-9 h-9 rounded-lg bg-white flex items-center justify-center">
+            <svg className="w-5 h-5 text-[#1A56DB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+            </svg>
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-600 border-2 border-[#1A56DB] flex items-center justify-center">
+              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </div>
+          </div>
+          <p className="font-mono text-xs uppercase tracking-widest text-white/70">
+            Pay per download · No account needed
+          </p>
+        </div>
+        <h1 className="font-display text-3xl font-bold">
+          <span className="text-white">Exam</span>{' '}
+          <span className="text-[#FAC775]">Papers</span>{' '}
+          <span className="inline-block border-2 border-white rounded-full px-4 py-0.5 text-white">
+            Kenya
+          </span>
+        </h1>
+        <p className="text-white/70 text-sm mt-3">CBC &amp; 8-4-4 · Past Papers with Answers</p>
+      </header>
+
+      {/* WhatsApp community banner */}
+      <div className="bg-green-50 border-b border-green-100 px-4 py-3 text-center relative">
+        <details className="inline-block text-left">
+          <summary className="cursor-pointer list-none inline-flex items-center gap-2 text-sm font-semibold text-green-700 hover:text-green-800">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+            </svg>
+            Join our WhatsApp community
+          </summary>
+          <div className="mt-2 bg-white border border-green-200 rounded-md shadow-md p-2 flex flex-col gap-1 absolute z-10">
+            <a href="https://chat.whatsapp.com/LcHkl5h5JCZ82F8sjESRxR?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Grade 10 Parents Group</a>
+            <a href="https://chat.whatsapp.com/Jiil0ZnMDkWHArzt4dT9S6?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Group 2</a>
+            <a href="https://chat.whatsapp.com/CWF0MRqvbE35ANUDyMdOTr?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Weekly Exams Group</a>
+            <a href="https://chat.whatsapp.com/Cjc6LFlY1EZHn88xkMRJa1?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Group 4</a>
+          </div>
+        </details>
       </div>
-    </div>
-    <p className="font-mono text-xs uppercase tracking-widest text-white/70">
-      Pay per download · No account needed
-    </p>
-  </div>
-  <h1 className="font-display text-3xl font-bold">
-    <span className="text-white">Exam</span>{' '}
-    <span className="text-[#FAC775]">Papers</span>{' '}
-    <span className="inline-block border-2 border-white rounded-full px-4 py-0.5 text-white">
-      Kenya
-    </span>
-  </h1>
-  <p className="text-white/70 text-sm mt-3">CBC &amp; 8-4-4 · Past Papers with Answers</p>
-</header>
-
-
 
       {/* Filters */}
       <div className="bg-white border-b border-gray-200 px-4 py-3">
@@ -166,6 +182,34 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* Marketing footer */}
+      <footer className="bg-gray-900 text-white px-6 py-8 mt-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-sm text-gray-400 mb-4">Follow us & explore more</p>
+          <div className="flex justify-center gap-6 mb-4">
+            <a
+              href="https://www.facebook.com/share/191QLVDRhY/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-300 hover:text-white text-sm"
+            >
+              Facebook
+            </a>
+          </div>
+          <p className="text-xs text-gray-500">
+            Also visit:{' '}
+            <a
+              href="https://mwalimuaustineapp.co.ke"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-gray-300"
+            >
+              Mwalimu Austine App
+            </a>
+          </p>
+        </div>
+      </footer>
 
       {selectedPaper && (
         <BuyModal paper={selectedPaper} onClose={() => setSelectedPaper(null)} />
