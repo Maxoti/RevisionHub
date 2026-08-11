@@ -19,7 +19,7 @@ export async function listPapers(req: Request, res: Response): Promise<void> {
             price, is_bundle
      FROM papers
      WHERE ${conditions.join(' AND ')}
-     ORDER BY is_bundle DESC, grade ASC, subject ASC`,
+     ORDER BY created_at DESC, is_bundle DESC, grade ASC, subject ASC`,   // ← THIS LINE changed
     values
   );
 
