@@ -3,6 +3,7 @@ import type { Paper, PaperFilters, Curriculum, ExamType, Term } from './types';
 import { fetchPapers } from './api';
 import PaperCard from './components/PaperCard';
 import BuyModal from './components/BuyModal';
+const SITE_VARIANT = import.meta.env.VITE_SITE_VARIANT || 'default';
 
 const CBC_GRADES  = ['PP1', 'PP2', 'Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
 const FORM_GRADES = ['Form 1', 'Form 2', 'Form 3', 'Form 4'];
@@ -79,23 +80,25 @@ export default function App() {
         <p className="text-white/70 text-sm mt-3">CBC &amp; 8-4-4 · Past Papers with Answers</p>
       </header>
 
-      {/* WhatsApp community banner */}
-      <div className="bg-green-50 border-b border-green-100 px-4 py-3 text-center relative">
-        <details className="inline-block text-left">
-          <summary className="cursor-pointer list-none inline-flex items-center gap-2 text-sm font-semibold text-green-700 hover:text-green-800">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-            </svg>
-            Join our WhatsApp community
-          </summary>
-          <div className="mt-2 bg-white border border-green-200 rounded-md shadow-md p-2 flex flex-col gap-1 absolute z-10">
-            <a href="https://chat.whatsapp.com/LcHkl5h5JCZ82F8sjESRxR?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Grade 10 Parents Group</a>
-            <a href="https://chat.whatsapp.com/Jiil0ZnMDkWHArzt4dT9S6?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Group 2</a>
-            <a href="https://chat.whatsapp.com/CWF0MRqvbE35ANUDyMdOTr?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Weekly Exams Group</a>
-            <a href="https://chat.whatsapp.com/Cjc6LFlY1EZHn88xkMRJa1?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Group 4</a>
-          </div>
-        </details>
-      </div>
+     {/* WhatsApp community banner — Austine only */}
+      {SITE_VARIANT === 'austine' && (
+        <div className="bg-green-50 border-b border-green-100 px-4 py-3 text-center relative">
+          <details className="inline-block text-left">
+            <summary className="cursor-pointer list-none inline-flex items-center gap-2 text-sm font-semibold text-green-700 hover:text-green-800">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+              </svg>
+              Join our WhatsApp community
+            </summary>
+            <div className="mt-2 bg-white border border-green-200 rounded-md shadow-md p-2 flex flex-col gap-1 absolute z-10">
+              <a href="https://chat.whatsapp.com/LcHkl5h5JCZ82F8sjESRxR?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Grade 10 Parents Group</a>
+              <a href="https://chat.whatsapp.com/Jiil0ZnMDkWHArzt4dT9S6?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Group 2</a>
+              <a href="https://chat.whatsapp.com/CWF0MRqvbE35ANUDyMdOTr?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Weekly Exams Group</a>
+              <a href="https://chat.whatsapp.com/Cjc6LFlY1EZHn88xkMRJa1?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Group 4</a>
+            </div>
+          </details>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white border-b border-gray-200 px-4 py-3">
@@ -183,36 +186,40 @@ export default function App() {
         )}
       </main>
 
-      {/* Marketing footer */}
-      <footer className="bg-gray-900 text-white px-6 py-8 mt-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-sm text-gray-400 mb-4">Follow us & explore more</p>
-          <div className="flex justify-center gap-6 mb-4">
-            <a
-              href="https://www.facebook.com/share/191QLVDRhY/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-gray-300 hover:text-white text-sm"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.523 1.492-3.917 3.777-3.917 1.094 0 2.238.197 2.238.197v2.475h-1.26c-1.242 0-1.63.775-1.63 1.57v1.89h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/>
-              </svg>
-              Facebook
-            </a>
+   {/* Marketing footer — Austine only */}
+      {SITE_VARIANT === 'austine' && (
+        <footer className="bg-gray-900 text-white px-6 py-8 mt-8">
+          <div className="max-w-4xl mx-auto text-center">
+            <p className="text-sm text-gray-400 mb-4">Follow us & explore more</p>
+            <div className="flex justify-center gap-6 mb-4">
+              
+              <a
+                href="https://www.facebook.com/share/191QLVDRhY/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-gray-300 hover:text-white text-sm"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.523 1.492-3.917 3.777-3.917 1.094 0 2.238.197 2.238.197v2.475h-1.26c-1.242 0-1.63.775-1.63 1.57v1.89h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/>
+                </svg>
+                Facebook
+              </a>
+            </div>
+            <p className="text-xs text-gray-500">
+              Also visit:{' '}
+              <a
+              
+                href="https://mwalimuaustineapp.co.ke"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-gray-300"
+              >
+                Mwalimu Austine App
+              </a>
+            </p>
           </div>
-          <p className="text-xs text-gray-500">
-            Also visit:{' '}
-            <a
-              href="https://mwalimuaustineapp.co.ke"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-gray-300"
-            >
-              Mwalimu Austine App
-            </a>
-          </p>
-        </div>
-      </footer>
+        </footer>
+      )}
 
       {selectedPaper && (
         <BuyModal paper={selectedPaper} onClose={() => setSelectedPaper(null)} />
