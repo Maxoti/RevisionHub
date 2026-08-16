@@ -3,6 +3,7 @@ import type { Paper, PaperFilters, Curriculum, ExamType, Term } from './types';
 import { fetchPapers } from './api';
 import PaperCard from './components/PaperCard';
 import BuyModal from './components/BuyModal';
+import mwalimuLogo from './assets/mwalimu-austine-logo.png';
 const SITE_VARIANT = import.meta.env.VITE_SITE_VARIANT || 'default';
 
 const CBC_GRADES  = ['PP1', 'PP2', 'Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
@@ -53,32 +54,58 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-[#1A56DB] text-white py-10 px-6 text-center">
-        <div className="inline-flex items-center gap-2 mb-3">
-          <div className="relative w-9 h-9 rounded-lg bg-white flex items-center justify-center">
-            <svg className="w-5 h-5 text-[#1A56DB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+     {/* Header */}
+<header className="bg-[#1A56DB] text-white py-10 px-6 text-center">
+  <div className="inline-flex items-center gap-2 mb-3">
+    <div className="relative w-9 h-9 rounded-lg bg-white flex items-center justify-center overflow-hidden">
+      {SITE_VARIANT === 'austine' ? (
+        <img
+          src={mwalimuLogo}
+          alt="Mwalimu Austine App"
+          className="w-full h-full object-contain p-0.5"
+        />
+      ) : (
+        <>
+          <svg className="w-5 h-5 text-[#1A56DB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+          </svg>
+          <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-600 border-2 border-[#1A56DB] flex items-center justify-center">
+            <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-600 border-2 border-[#1A56DB] flex items-center justify-center">
-              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-            </div>
           </div>
-          <p className="font-mono text-xs uppercase tracking-widest text-white/70">
-            Pay per download · No account needed
-          </p>
-        </div>
-        <h1 className="font-display text-3xl font-bold">
-          <span className="text-white">Exam</span>{' '}
-          <span className="text-[#FAC775]">Papers</span>{' '}
-          <span className="inline-block border-2 border-white rounded-full px-4 py-0.5 text-white">
-            Kenya
-          </span>
-        </h1>
-        <p className="text-white/70 text-sm mt-3">CBC &amp; 8-4-4 · Past Papers with Answers</p>
-      </header>
+        </>
+      )}
+    </div>
+    <p className="font-mono text-xs uppercase tracking-widest text-white/70">
+      Pay per download · No account needed
+    </p>
+  </div>
+  <h1 className="font-display text-3xl font-bold">
+    {SITE_VARIANT === 'austine' ? (
+      <>
+        <span className="text-white">Kenyan</span>{' '}
+        <span className="text-[#FAC775]">Assessment</span>{' '}
+        <span className="inline-block border-2 border-white rounded-full px-4 py-0.5 text-white">
+          Papers
+        </span>
+      </>
+    ) : (
+      <>
+        <span className="text-white">Exam</span>{' '}
+        <span className="text-[#FAC775]">Papers</span>{' '}
+        <span className="inline-block border-2 border-white rounded-full px-4 py-0.5 text-white">
+          Kenya
+        </span>
+      </>
+    )}
+  </h1>
+  <p className="text-white/70 text-sm mt-3">
+    {SITE_VARIANT === 'austine'
+      ? 'CBE · Revision Papers with Answers'
+      : 'CBC & 8-4-4 · Past Papers with Answers'}
+  </p>
+</header>
 
      {/* WhatsApp community banner — Austine only */}
       {SITE_VARIANT === 'austine' && (
