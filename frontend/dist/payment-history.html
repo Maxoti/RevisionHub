@@ -147,10 +147,12 @@
       if (!phone) return;
 
       btn.disabled = true;
-      btn.textContent = 'Searching…';
+      btn.textContent = 'Searching...';
 
       try {
-       const res = await fetch(`https://api.myassessment.co.ke/admin/payment-history?phone=${encodeURIComponent(phone)}`, {
+        const res = await fetch(`https://api.myassessment.co.ke/admin/payment-history?phone=${encodeURIComponent(phone)}`, {
+          headers: { Authorization: 'Basic ' + btoa(`${user}:${pass}`) },
+        });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Search failed');
 
