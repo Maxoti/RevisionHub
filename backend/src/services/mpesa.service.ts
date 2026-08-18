@@ -12,12 +12,55 @@ const {
   MPESA_PASSKEY,
   MPESA_ENV,
   MPESA_CALLBACK_URL,
+  MPESA_TILL_NUMBER,   // NEW — the actual PartyB / till receiving funds
+  MPESA_CLIENT_NAME,   // NEW — e.g. "robert" or "austine", for sanity logging only
 } = process.env;
 
 const BASE_URL =
   MPESA_ENV === 'production'
     ? 'https://api.safaricom.co.ke'
     : 'https://sandbox.safaricom.co.ke';
+
+// ── Startup validation ──────────────────────────────────────────────
+// Fail loudly at boot if this deployment's env isn't fully wired up.
+// This is what would have caught the Austine-till-on-Robert-instance bug
+// before a real customer's STK prompt showed the wrong name.
+function validateMpesaConfig(): void {
+  const required: Record<string, string | undefined> = {
+    MPESA_CONSUMER_KEY,
+    MPESA_CONSUMER_SECRET,
+    MPESA_SHORTCODE,
+    MPESA_PASSKEY,
+    MPESA_CALLBACK_URL,
+    MPESA_TILL_NUMBER,
+  };
+
+  const missing = Object.entries(required)
+    .filter(([, v]) => !v)
+    .map(([k]) => k);
+
+  if (missing.length > 0) {
+    throw new Error(
+      `[mpesa.service] Missing required env vars: ${missing.join(', ')}. ` +
+      `Refusing to start — this would silently misroute payments.`
+    );
+  }
+
+  console.log(
+    `[mpesa.service] Configured for client="${MPESA_CLIENT_NAME || 'UNSET'}" ` +
+    `shortcode=${MPESA_SHORTCODE} till(PartyB)=${MPESA_TILL_NUMBER} env=${MPESA_ENV}`
+  );
+
+  if (!MPESA_CLIENT_NAME) {
+    console.warn(
+      '[mpesa.service] MPESA_CLIENT_NAME is not set. Strongly recommended — ' +
+      'without it there is no human-readable confirmation of which client ' +
+      'this deployment is configured for at boot time.'
+    );
+  }
+}
+
+validateMpesaConfig();
 
 let cachedToken: string | null = null;
 let tokenExpiresAt = 0;
@@ -81,7 +124,7 @@ export async function triggerStkPush({
     TransactionType: 'CustomerBuyGoodsOnline',
     Amount: amount,
     PartyA: formatPhone(phone),
-    PartyB: '9029109',
+    PartyB: MPESA_TILL_NUMBER,   // was hardcoded '9029109' — now env-driven
     PhoneNumber: formatPhone(phone),
     CallBackURL: MPESA_CALLBACK_URL,
     AccountReference: `PUR${purchaseId}`,
