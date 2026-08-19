@@ -6,13 +6,12 @@ import BuyModal from './components/BuyModal';
 import mwalimuLogo from './assets/mwalimu-austine-logo.png';
 const SITE_VARIANT = import.meta.env.VITE_SITE_VARIANT || 'default';
 
-const CBC_GRADES  = ['PP1', 'PP2', 'Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
+const CBE_GRADES  = ['PP1', 'PP2', 'Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
 const FORM_GRADES = ['Form 1', 'Form 2', 'Form 3', 'Form 4'];
-const EXAM_TYPES: ExamType[]  = ['Opener', 'Mid Term', 'End Term','Weekly'];
+const EXAM_TYPES: ExamType[] = ['Opener', 'Mid Term', 'End Term', 'Weekly', 'Schemes of Work', 'Lesson Plans', 'Revision Materials'];
 const TERMS: Term[]           = ['1', '2', '3'];
 const CURRENT_YEAR            = new Date().getFullYear();
-const YEARS                   = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2].map(String);
-
+const YEARS                   = [CURRENT_YEAR + 1, CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2].map(String);
 const DEFAULT_FILTERS: PaperFilters = {
   curriculum: '',
   grade: '',
@@ -48,9 +47,9 @@ export default function App() {
   }
 
   const gradeOptions =
-    filters.curriculum === 'CBC'  ? CBC_GRADES  :
+    filters.curriculum === 'CBE'  ? CBE_GRADES  :
     filters.curriculum === '844'  ? FORM_GRADES :
-    [...CBC_GRADES, ...FORM_GRADES];
+    [...CBE_GRADES, ...FORM_GRADES];
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -121,7 +120,7 @@ export default function App() {
              <a href="https://chat.whatsapp.com/LcHkl5h5JCZ82F8sjESRxR?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Grade 10 Parents Group</a>
 <a href="https://chat.whatsapp.com/Imk5vZudnOTIOpJgGK5yCW?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">CBE App Community</a>
 <a href="https://chat.whatsapp.com/LH7dHY0m3XbI3gCwLRyS1W?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Weekly Exams Group</a>
-<a href="https://chat.whatsapp.com/Cjc6LFlY1EZHn88xkMRJa1?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Group 4</a>
+<a href="https://chat.whatsapp.com/Cjc6LFlY1EZHn88xkMRJa1?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Group 2</a>
             </div>
           </details>
         </div>
@@ -136,7 +135,7 @@ export default function App() {
             className="border border-gray-200 bg-white rounded-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1A56DB]"
           >
             <option value="">All Curricula</option>
-            <option value="CBC">CBC</option>
+            <option value="CBE">CBE</option>
             <option value="844">8-4-4</option>
           </select>
 
@@ -154,7 +153,7 @@ export default function App() {
             onChange={(e) => setFilter('exam_type', e.target.value as ExamType | '')}
             className="border border-gray-200 bg-white rounded-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1A56DB]"
           >
-            <option value="">All Exam Types</option>
+            <option value="">All Types</option>
             {EXAM_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
 
