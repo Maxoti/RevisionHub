@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import pool from '../config/db';
-import { uploadPaper, deletePaperFile } from '../services/storage.service';
+import { uploadPaper } from '../services/storage.service';
 
 type MulterRequest = Request & { file?: any };
 
@@ -27,8 +27,6 @@ export async function listPapers(req: Request, res: Response): Promise<void> {
   res.json(rows);
 }
 
-// NEW — admin list, includes inactive/soft-deleted papers and file_key
-// so the admin UI can show everything and act on it.
 export async function listPapersAdmin(req: Request, res: Response): Promise<void> {
   const { rows } = await pool.query(
     `SELECT id, title, curriculum, grade, subject, exam_type, term, year,
@@ -78,77 +76,69 @@ export async function createPaper(req: MulterRequest, res: Response): Promise<vo
   res.status(201).json({ id: rows[0].id, message: 'Paper uploaded successfully' });
 }
 
-// NEW — edit metadata only (title, price, exam_type, etc). Does not
-// touch the uploaded file — if the file itself is wrong, delete and
-// re-upload instead.
 export async function updatePaper(req: Request, res: Response): Promise<void> {
   const { id } = req.params;
   const { title, curriculum, grade, subject, exam_type, term, year, price, is_bundle, active } = req.body;
 
-  const { rows: existingRows } = await pool.query('SELECT id FROM papers WHERE id = $1', [id]);
-  if (existingRows.length === 0) {
-    res.status(404).json({ error: 'Paper not found' });
-    return;
+  try {
+    const { rows: existingRows } = await pool.query('SELECT id FROM papers WHERE id = $1', [id]);
+    if (existingRows.length === 0) {
+      res.status(404).json({ error: 'Paper not found' });
+      return;
+    }
+
+    const fields: string[] = [];
+    const values: unknown[] = [];
+
+    function set(column: string, value: unknown) {
+      values.push(value);
+      fields.push(`${column} = $${values.length}`);
+    }
+
+    if (title !== undefined)      set('title', title);
+    if (curriculum !== undefined) set('curriculum', curriculum);
+    if (grade !== undefined)      set('grade', grade);
+    if (subject !== undefined)    set('subject', subject || null);
+    if (exam_type !== undefined)  set('exam_type', exam_type);
+    if (term !== undefined)       set('term', term);
+    if (year !== undefined)       set('year', Number(year));
+    if (price !== undefined)      set('price', Number(price));
+    if (is_bundle !== undefined)  set('is_bundle', is_bundle === 'true' || is_bundle === true);
+    if (active !== undefined)     set('active', active === 'true' || active === true);
+
+    if (fields.length === 0) {
+      res.status(400).json({ error: 'No fields provided to update' });
+      return;
+    }
+
+    values.push(id);
+    await pool.query(
+      `UPDATE papers SET ${fields.join(', ')} WHERE id = $${values.length}`,
+      values
+    );
+
+    res.json({ message: 'Paper updated successfully' });
+  } catch (err) {
+    console.error('[updatePaper]', err);
+    res.status(500).json({ error: 'Failed to update paper' });
   }
-
-  const fields: string[] = [];
-  const values: unknown[] = [];
-
-  function set(column: string, value: unknown) {
-    values.push(value);
-    fields.push(`${column} = $${values.length}`);
-  }
-
-  if (title !== undefined)      set('title', title);
-  if (curriculum !== undefined) set('curriculum', curriculum);
-  if (grade !== undefined)      set('grade', grade);
-  if (subject !== undefined)    set('subject', subject || null);
-  if (exam_type !== undefined)  set('exam_type', exam_type);
-  if (term !== undefined)       set('term', term);
-  if (year !== undefined)       set('year', Number(year));
-  if (price !== undefined)      set('price', Number(price));
-  if (is_bundle !== undefined)  set('is_bundle', is_bundle === 'true' || is_bundle === true);
-  if (active !== undefined)     set('active', active === 'true' || active === true);
-
-  if (fields.length === 0) {
-    res.status(400).json({ error: 'No fields provided to update' });
-    return;
-  }
-
-  values.push(id);
-  await pool.query(
-    `UPDATE papers SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${values.length}`,
-    values
-  );
-
-  res.json({ message: 'Paper updated successfully' });
 }
 
-// NEW — hard delete: removes DB row AND the R2 file, so nothing is
-// left orphaned in storage. If you'd rather soft-delete (keep the row,
-// just hide it), use updatePaper with { active: false } instead and
-// skip this entirely.
 export async function deletePaper(req: Request, res: Response): Promise<void> {
   const { id } = req.params;
 
-  const { rows } = await pool.query('SELECT file_key FROM papers WHERE id = $1', [id]);
-  if (rows.length === 0) {
-    res.status(404).json({ error: 'Paper not found' });
-    return;
-  }
-
-  const { file_key } = rows[0];
-
   try {
-    await deletePaperFile(file_key);
+    const { rows } = await pool.query('SELECT file_key FROM papers WHERE id = $1', [id]);
+    if (rows.length === 0) {
+      res.status(404).json({ error: 'Paper not found' });
+      return;
+    }
+
+    await pool.query('UPDATE papers SET active = FALSE WHERE id = $1', [id]);
+
+    res.json({ message: 'Paper deactivated successfully' });
   } catch (err) {
-    // Log but don't block DB deletion on an R2 failure — an orphaned
-    // file is recoverable manually; a paper stuck forever because R2
-    // hiccuped is a worse outcome.
-    console.error('[deletePaper] Failed to delete R2 file:', file_key, err);
+    console.error('[deletePaper]', err);
+    res.status(500).json({ error: 'Failed to delete paper' });
   }
-
-  await pool.query('DELETE FROM papers WHERE id = $1', [id]);
-
-  res.json({ message: 'Paper deleted successfully' });
 }
