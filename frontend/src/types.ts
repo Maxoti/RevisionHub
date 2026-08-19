@@ -1,5 +1,5 @@
 export type Curriculum = 'CBC' | '844';
-export type ExamType = 'Opener' | 'Mid Term' | 'End Term';
+export type ExamType = 'Opener' | 'Mid Term' | 'End Term' | 'Weekly';
 export type Term = '1' | '2' | '3';
 
 export interface Paper {

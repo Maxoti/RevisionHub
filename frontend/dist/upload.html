@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Admin — Upload Exam Paper</title>
+<title>Admin — Manage Exam Papers</title>
 <style>
   * { box-sizing: border-box; }
 
@@ -25,10 +25,9 @@
     width: 100%;
     background: #ffffff;
     padding: 0;
-    padding-bottom: 2 rem;
+    padding-bottom: 2rem;
   }
 
-  /* Two-column layout for the bulk of the form on wide screens */
   .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -41,6 +40,12 @@
     margin: 0 0 0.25rem;
     color: #0a7d2c;
     font-size: 1.5rem;
+  }
+
+  h3 {
+    margin: 2.5rem 0 1rem;
+    color: #1a1a1a;
+    font-size: 1.15rem;
   }
 
   .subtitle {
@@ -91,11 +96,88 @@
   #status.ok  { background: #e3f7ea; color: #0a7d2c; border: 1px solid #b6e8c8; }
   #status.err { background: #fbe9e9; color: #a4282c; border: 1px solid #f1c4c4; }
 
+  /* ── Papers list ─────────────────────────────────────── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.5rem;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+  }
+
+  th {
+    color: #666;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  tr.inactive { opacity: 0.5; }
+
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .badge.active   { background: #e3f7ea; color: #0a7d2c; }
+  .badge.inactive { background: #f1f1f1; color: #888; }
+
+  .row-actions { display: flex; gap: 0.4rem; }
+  .row-actions button {
+    margin: 0; width: auto; padding: 0.35rem 0.75rem;
+    font-size: 0.78rem; border-radius: 6px;
+  }
+  .btn-edit   { background: #eef4ff; color: #1a56db; }
+  .btn-delete { background: #fbe9e9; color: #a4282c; }
+  .btn-edit:hover, .btn-delete:hover { filter: brightness(0.97); }
+
+  #refresh-btn {
+    margin-top: 0; width: auto; padding: 0.5rem 1.25rem; font-size: 0.85rem;
+  }
+
+  .list-header {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  #papers-status { font-size: 0.85rem; color: #888; margin: 0.5rem 0; }
+
+  /* ── Edit modal ──────────────────────────────────────── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    align-items: center; justify-content: center;
+    z-index: 50;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: #fff; border-radius: 10px;
+    width: 100%; max-width: 420px;
+    padding: 1.75rem; max-height: 90vh; overflow-y: auto;
+  }
+
+  .modal h3 { margin-top: 0; }
+
+  .modal-actions { display: flex; gap: 0.6rem; margin-top: 1.5rem; }
+  .modal-actions button { margin-top: 0; }
+  .btn-cancel { background: #f1f1f1; color: #444; }
 
   @media (max-width: 700px) {
     body { padding: 2rem 1.25rem; }
     .form-grid { grid-template-columns: 1fr; }
     .row { grid-template-columns: 1fr; }
+    table { font-size: 0.78rem; }
+    th:nth-child(3), td:nth-child(3) { display: none; } /* hide grade col on mobile */
   }
 </style>
 </head>
@@ -147,6 +229,7 @@
             <option value="Opener">Opener</option>
             <option value="Mid Term">Mid Term</option>
             <option value="End Term">End Term</option>
+            <option value="Weekly">Weekly</option>
           </select>
         </div>
         <div>
@@ -191,9 +274,75 @@
     </div>
 
     <p id="status" style="display:none"></p>
+
+    <!-- ── Papers list ────────────────────────────────── -->
+    <div class="list-header">
+      <h3>Manage Papers</h3>
+      <button id="refresh-btn" onclick="loadPapers()">Refresh</button>
+    </div>
+    <p id="papers-status">Enter admin credentials above, then click Refresh to load papers.</p>
+
+    <table id="papers-table" style="display:none">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Type</th>
+          <th>Grade</th>
+          <th>Price</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="papers-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- ── Edit modal ──────────────────────────────────── -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal">
+      <h3>Edit Paper</h3>
+      <input type="hidden" id="edit-id" />
+
+      <label>Title</label>
+      <input id="edit-title" />
+
+      <label>Exam type</label>
+      <select id="edit-exam_type">
+        <option value="Opener">Opener</option>
+        <option value="Mid Term">Mid Term</option>
+        <option value="End Term">End Term</option>
+        <option value="Weekly">Weekly</option>
+      </select>
+
+      <label>Term</label>
+      <select id="edit-term">
+        <option value="1">Term 1</option>
+        <option value="2">Term 2</option>
+        <option value="3">Term 3</option>
+      </select>
+
+      <label>Year</label>
+      <input id="edit-year" type="number" />
+
+      <label>Price (KES)</label>
+      <input id="edit-price" type="number" />
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="edit-active" />
+        <label for="edit-active" style="margin-top:0">Active (visible to buyers)</label>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+        <button onclick="saveEdit()">Save Changes</button>
+      </div>
+      <p id="edit-status" style="display:none"></p>
+    </div>
   </div>
 
   <script>
+    const API_BASE = 'https://api.myassessment.co.ke/api';
+
     const CBC_GRADES  = ['PP1','PP2','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
     const FORM_GRADES = ['Form 1','Form 2','Form 3','Form 4'];
 
@@ -226,11 +375,15 @@
       }
     }
 
+    function authHeader() {
+      const user = document.getElementById('admin-user').value;
+      const pass = document.getElementById('admin-pass').value;
+      return 'Basic ' + btoa(`${user}:${pass}`);
+    }
+
     async function upload() {
       const btn    = document.getElementById('upload-btn');
       const status = document.getElementById('status');
-      const user   = document.getElementById('admin-user').value;
-      const pass   = document.getElementById('admin-pass').value;
 
       const formData = new FormData();
       formData.append('title',      document.getElementById('title').value);
@@ -250,9 +403,9 @@
       status.style.display = 'none';
 
       try {
-        const res = await fetch('https://api.myassessment.co.ke/api/admin/papers', {
+        const res = await fetch(`${API_BASE}/admin/papers`, {
           method: 'POST',
-          headers: { Authorization: 'Basic ' + btoa(`${user}:${pass}`) },
+          headers: { Authorization: authHeader() },
           body: formData,
         });
         const data = await res.json();
@@ -260,6 +413,7 @@
         status.className = 'ok';
         status.textContent = `Uploaded successfully — Paper ID ${data.id}`;
         document.getElementById('file').value = '';
+        loadPapers(); // refresh the list so the new paper shows immediately
       } catch (err) {
         status.className = 'err';
         status.textContent = 'Error: ' + err.message;
@@ -267,6 +421,137 @@
         status.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Upload Paper';
+      }
+    }
+
+    // ── Papers list ──────────────────────────────────────
+    async function loadPapers() {
+      const listStatus = document.getElementById('papers-status');
+      const table = document.getElementById('papers-table');
+      const tbody = document.getElementById('papers-tbody');
+
+      if (!document.getElementById('admin-user').value || !document.getElementById('admin-pass').value) {
+        listStatus.textContent = 'Enter admin credentials above first.';
+        return;
+      }
+
+      listStatus.textContent = 'Loading…';
+      table.style.display = 'none';
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/papers`, {
+          headers: { Authorization: authHeader() },
+        });
+        if (!res.ok) throw new Error('Failed to load papers (check credentials)');
+        const papers = await res.json();
+
+        if (papers.length === 0) {
+          listStatus.textContent = 'No papers found.';
+          return;
+        }
+
+        tbody.innerHTML = papers.map(p => `
+          <tr class="${p.active ? '' : 'inactive'}" data-paper='${JSON.stringify(p).replace(/'/g, "&#39;")}'>
+            <td>${escapeHtml(p.title)}</td>
+            <td>${escapeHtml(p.exam_type)}${p.is_bundle ? ' (Bundle)' : ''}</td>
+            <td>${escapeHtml(p.grade)}</td>
+            <td>KES ${p.price}</td>
+            <td><span class="badge ${p.active ? 'active' : 'inactive'}">${p.active ? 'Active' : 'Hidden'}</span></td>
+            <td class="row-actions">
+              <button class="btn-edit" onclick="openEditModal(${p.id})">Edit</button>
+              <button class="btn-delete" onclick="deletePaper(${p.id}, '${escapeHtml(p.title).replace(/'/g, "\\'")}')">Delete</button>
+            </td>
+          </tr>
+        `).join('');
+
+        table.style.display = '';
+        listStatus.textContent = `${papers.length} paper(s) loaded.`;
+      } catch (err) {
+        listStatus.textContent = 'Error: ' + err.message;
+      }
+    }
+
+    function escapeHtml(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    async function deletePaper(id, title) {
+      if (!confirm(`Delete "${title}"? This removes the file permanently and cannot be undone.`)) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/papers/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: authHeader() },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Delete failed');
+        loadPapers();
+      } catch (err) {
+        alert('Error deleting paper: ' + err.message);
+      }
+    }
+
+    // ── Edit modal ───────────────────────────────────────
+    function openEditModal(id) {
+      const row = document.querySelector(`tr[data-paper*='"id":${id},'] , tr[data-paper*='"id":${id}}']`);
+      // Fallback: find via all rows since JSON key order can vary
+      const allRows = document.querySelectorAll('#papers-tbody tr');
+      let paper = null;
+      allRows.forEach(r => {
+        const data = JSON.parse(r.getAttribute('data-paper').replace(/&#39;/g, "'"));
+        if (data.id === id) paper = data;
+      });
+      if (!paper) return;
+
+      document.getElementById('edit-id').value = paper.id;
+      document.getElementById('edit-title').value = paper.title;
+      document.getElementById('edit-exam_type').value = paper.exam_type;
+      document.getElementById('edit-term').value = paper.term;
+      document.getElementById('edit-year').value = paper.year;
+      document.getElementById('edit-price').value = paper.price;
+      document.getElementById('edit-active').checked = paper.active;
+      document.getElementById('edit-status').style.display = 'none';
+
+      document.getElementById('edit-modal').classList.add('open');
+    }
+
+    function closeEditModal() {
+      document.getElementById('edit-modal').classList.remove('open');
+    }
+
+    async function saveEdit() {
+      const id = document.getElementById('edit-id').value;
+      const status = document.getElementById('edit-status');
+
+      const payload = {
+        title: document.getElementById('edit-title').value,
+        exam_type: document.getElementById('edit-exam_type').value,
+        term: document.getElementById('edit-term').value,
+        year: document.getElementById('edit-year').value,
+        price: document.getElementById('edit-price').value,
+        active: document.getElementById('edit-active').checked,
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/papers/${id}`, {
+          method: 'PATCH',
+          headers: {
+            Authorization: authHeader(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Update failed');
+
+        closeEditModal();
+        loadPapers();
+      } catch (err) {
+        status.className = 'err';
+        status.textContent = 'Error: ' + err.message;
+        status.style.display = 'block';
       }
     }
   </script>

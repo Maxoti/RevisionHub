@@ -8,7 +8,7 @@ const SITE_VARIANT = import.meta.env.VITE_SITE_VARIANT || 'default';
 
 const CBC_GRADES  = ['PP1', 'PP2', 'Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
 const FORM_GRADES = ['Form 1', 'Form 2', 'Form 3', 'Form 4'];
-const EXAM_TYPES: ExamType[]  = ['Opener', 'Mid Term', 'End Term'];
+const EXAM_TYPES: ExamType[]  = ['Opener', 'Mid Term', 'End Term','Weekly'];
 const TERMS: Term[]           = ['1', '2', '3'];
 const CURRENT_YEAR            = new Date().getFullYear();
 const YEARS                   = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2].map(String);
@@ -118,10 +118,10 @@ export default function App() {
               Join our WhatsApp community
             </summary>
             <div className="mt-2 bg-white border border-green-200 rounded-md shadow-md p-2 flex flex-col gap-1 absolute z-10">
-              <a href="https://chat.whatsapp.com/LcHkl5h5JCZ82F8sjESRxR?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Grade 10 Parents Group</a>
-              <a href="https://chat.whatsapp.com/Jiil0ZnMDkWHArzt4dT9S6?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Group 2</a>
-              <a href="https://chat.whatsapp.com/CWF0MRqvbE35ANUDyMdOTr?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Weekly Exams Group</a>
-              <a href="https://chat.whatsapp.com/Cjc6LFlY1EZHn88xkMRJa1?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Group 4</a>
+             <a href="https://chat.whatsapp.com/LcHkl5h5JCZ82F8sjESRxR?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Grade 10 Parents Group</a>
+<a href="https://chat.whatsapp.com/Imk5vZudnOTIOpJgGK5yCW?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">CBE App Community</a>
+<a href="https://chat.whatsapp.com/LH7dHY0m3XbI3gCwLRyS1W?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Weekly Exams Group</a>
+<a href="https://chat.whatsapp.com/Cjc6LFlY1EZHn88xkMRJa1?s=cl&p=a&ilr=1" target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded">Group 4</a>
             </div>
           </details>
         </div>
