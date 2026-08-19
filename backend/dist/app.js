@@ -16,7 +16,9 @@ app.use((0, cors_1.default)({
         'https://www.myassessment.co.ke',
         'https://admin.myassessment.co.ke',
         'http://localhost:5173'
-    ]
+    ],
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express_1.default.json());
 app.use('/api', routes_1.default);

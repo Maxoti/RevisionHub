@@ -13,7 +13,9 @@ app.use(cors({
     'https://www.myassessment.co.ke',
     'https://admin.myassessment.co.ke',
     'http://localhost:5173'
-  ]
+  ],
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(express.json());
