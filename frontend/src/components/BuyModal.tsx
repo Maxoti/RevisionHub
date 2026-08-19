@@ -161,9 +161,7 @@ export default function BuyModal({ paper, onClose }: Props) {
               placeholder="you@example.com"
               className="w-full border border-gray-200 rounded px-3 py-2 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
-            <p className="text-xs text-gray-400 mb-3">
-              After payment, download link sent to your WhatsApp{email ? ' and email' : ''} automatically.
-            </p>
+           
             <button
               onClick={startPurchase}
               disabled={loading}
@@ -187,9 +185,7 @@ export default function BuyModal({ paper, onClose }: Props) {
           <div className="text-center py-4">
             <p className="text-sm text-gray-700 mb-4">Check your phone and enter your M-Pesa PIN...</p>
             <div className="mx-auto w-8 h-8 border-[3px] border-gray-200 border-t-blue-600 rounded-full animate-spin" />
-            <p className="text-xs text-gray-400 mt-4">
-              Download link will be sent to your WhatsApp{email ? ' and email' : ''} after payment.
-            </p>
+           
           </div>
         )}
 
@@ -197,7 +193,6 @@ export default function BuyModal({ paper, onClose }: Props) {
           <div className="text-center py-2">
             <div className="text-3xl mb-3">&#10003;</div>
             <p className="text-sm font-medium text-gray-700 mb-1">Payment confirmed!</p>
-            <p className="text-xs text-gray-400 mb-4">Link sent to your WhatsApp{email ? ' and email' : ''}.</p>
             <a
               href={downloadUrl(downloadToken)}
               className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-full transition-colors"
