@@ -2,6 +2,7 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -41,4 +42,15 @@ export async function getSignedDownloadUrl(
 ): Promise<string> {
   const command = new GetObjectCommand({ Bucket: BUCKET, Key: fileKey });
   return getSignedUrl(r2, command, { expiresIn: expiresInSeconds });
+}
+
+// NEW — deletes the underlying file from R2. Called by deletePaper()
+// in papers.controller.ts when an admin removes a paper.
+export async function deletePaperFile(fileKey: string): Promise<void> {
+  await r2.send(
+    new DeleteObjectCommand({
+      Bucket: BUCKET,
+      Key: fileKey,
+    })
+  );
 }

@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import adminAuth from '../middleware/adminAuth';
-import { listPapers, createPaper } from '../controllers/papers.controller';
+import { listPapers, createPaper, listPapersAdmin, updatePaper, deletePaper } from '../controllers/papers.controller';
 import { createPurchase, getPurchaseStatus } from '../controllers/purchases.controller';
 import { mpesaCallback } from '../controllers/mpesa.controller';
 import { downloadByToken } from '../controllers/download.controller';
@@ -19,6 +19,14 @@ router.get('/papers', listPapers);
 
 // Admin — upload a paper or bundle (Basic Auth)
 router.post('/admin/papers', adminAuth, upload.single('file'), createPaper);
+// Admin — list all papers, including inactive (Basic Auth)
+router.get('/admin/papers', adminAuth, listPapersAdmin);
+
+// Admin — edit paper metadata (Basic Auth)
+router.patch('/admin/papers/:id', adminAuth, updatePaper);
+
+
+router.delete('/admin/papers/:id', adminAuth, deletePaper);
 
 // Admin — payment history lookup (Basic Auth)
 router.get('/admin/payment-history', adminAuth, getPaymentHistory);

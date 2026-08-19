@@ -20,6 +20,11 @@ const upload = (0, multer_1.default)({
 router.get('/papers', papers_controller_1.listPapers);
 // Admin — upload a paper or bundle (Basic Auth)
 router.post('/admin/papers', adminAuth_1.default, upload.single('file'), papers_controller_1.createPaper);
+// Admin — list all papers, including inactive (Basic Auth)
+router.get('/admin/papers', adminAuth_1.default, papers_controller_1.listPapersAdmin);
+// Admin — edit paper metadata (Basic Auth)
+router.patch('/admin/papers/:id', adminAuth_1.default, papers_controller_1.updatePaper);
+router.delete('/admin/papers/:id', adminAuth_1.default, papers_controller_1.deletePaper);
 // Admin — payment history lookup (Basic Auth)
 router.get('/admin/payment-history', adminAuth_1.default, adminPayments_controller_1.getPaymentHistory);
 // Purchase flow
