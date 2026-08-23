@@ -4,6 +4,7 @@ import { fetchPapers } from './api';
 import PaperCard from './components/PaperCard';
 import BuyModal from './components/BuyModal';
 import mwalimuLogo from './assets/mwalimu-austine-logo.png';
+import examVaultLogo from './assets/examvault-logo.jpeg';
 const SITE_VARIANT = import.meta.env.VITE_SITE_VARIANT || 'default';
 
 const CBE_GRADES  = ['PP1', 'PP2', 'Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
@@ -53,6 +54,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+
+     {/* Header */}
      {/* Header */}
 <header className="bg-[#1A56DB] text-white py-10 px-6 text-center">
   <div className="inline-flex items-center gap-2 mb-3">
@@ -61,6 +64,12 @@ export default function App() {
         <img
           src={mwalimuLogo}
           alt="Mwalimu Austine App"
+          className="w-full h-full object-contain p-0.5"
+        />
+      ) : SITE_VARIANT === 'mark' ? (
+        <img
+          src={examVaultLogo}
+          alt="Exam Vault"
           className="w-full h-full object-contain p-0.5"
         />
       ) : (
@@ -89,6 +98,11 @@ export default function App() {
           Papers
         </span>
       </>
+    ) : SITE_VARIANT === 'mark' ? (
+      <>
+        <span className="text-white">Exam</span>{' '}
+        <span className="text-[#FAC775]">Vault</span>
+      </>
     ) : (
       <>
         <span className="text-white">Exam</span>{' '}
@@ -102,9 +116,12 @@ export default function App() {
   <p className="text-white/70 text-sm mt-3">
     {SITE_VARIANT === 'austine'
       ? 'CBE · Revision Papers with Answers'
+      : SITE_VARIANT === 'mark'
+      ? 'Past Papers · Smart Revision · Better Results'
       : 'CBC & 8-4-4 · Past Papers with Answers'}
   </p>
 </header>
+
 
      {/* WhatsApp community banner — Austine only */}
       {SITE_VARIANT === 'austine' && (

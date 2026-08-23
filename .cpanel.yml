@@ -1,16 +1,16 @@
 ---
 deployment:
   tasks:
-    # 1. Deploy compiled frontend files to myassessment.co.ke
-    - /bin/cp -R frontend/dist/* /home3/mwalimua/myassessment.co.ke/
+    # 1. Deploy compiled frontend files to www.revisionvault.co.ke
+    - /bin/cp -R frontend/dist/* /home1/revision/public_html/
 
-    # 2. Deploy admin pages to admin.myassessment.co.ke
-    - /bin/cp frontend/dist/upload.html /home3/mwalimua/admin.myassessment.co.ke/
-    - /bin/cp frontend/dist/payment-history.html /home3/mwalimua/admin.myassessment.co.ke/
+    # 2. Deploy admin pages to admin.revisionvault.co.ke
+    - /bin/cp frontend/dist/upload.html /home1/revision/admin.revisionvault.co.ke/
+    - /bin/cp frontend/dist/payment-history.html /home1/revision/admin.revisionvault.co.ke/
 
     # 3. Deploy backend dist folder
-    - /bin/cp -R backend/dist /home3/mwalimua/backend/
+    - /bin/cp -R backend/dist /home1/revision/backend/
 
     # 4. Deploy configuration files to the backend root directory
-    - /bin/cp backend/package.json /home3/mwalimua/backend/
-    - /bin/cp backend/package-lock.json /home3/mwalimua/backend
+    - /bin/cp backend/package.json /home1/revision/backend/
+    - /bin/cp backend/package-lock.json /home1/revision/backend/
