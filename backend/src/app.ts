@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from 'express';
+﻿import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import routes from './routes';
@@ -9,6 +9,8 @@ app.use(cors({
   origin: [
     'https://revisionhub.co.ke',
     'https://www.revisionhub.co.ke',
+    'https://admin.revisionhub.co.ke',
+    'https://api.revisionhub.co.ke',
     'https://myassessment.co.ke',
     'https://www.myassessment.co.ke',
     'https://admin.myassessment.co.ke',
@@ -19,7 +21,6 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
 app.use('/api', routes);
 
 // Serve the static admin upload page

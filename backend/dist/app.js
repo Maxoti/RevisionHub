@@ -12,6 +12,8 @@ app.use((0, cors_1.default)({
     origin: [
         'https://revisionhub.co.ke',
         'https://www.revisionhub.co.ke',
+        'https://admin.revisionhub.co.ke',
+        'https://api.revisionhub.co.ke',
         'https://myassessment.co.ke',
         'https://www.myassessment.co.ke',
         'https://admin.myassessment.co.ke',
