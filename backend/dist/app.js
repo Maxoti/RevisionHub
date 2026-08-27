@@ -10,8 +10,10 @@ const routes_1 = __importDefault(require("./routes"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
     origin: [
-        'https://revisionhub.co.ke',
-        'https://www.revisionhub.co.ke',
+        'https://revisionvault.co.ke',
+        'https://www.revisionvault.co.ke',
+        'https://admin.revisionvault.co.ke',
+        'https://api.revisionvault.co.ke',
         'https://myassessment.co.ke',
         'https://www.myassessment.co.ke',
         'https://admin.myassessment.co.ke',
