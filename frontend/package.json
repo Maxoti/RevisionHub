@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "echo ERROR: use a client-specific build — build:mark, build:austine, or build:robert && exit 1",
+    "build:mark": "tsc -b && vite build --mode mark",
+    "build:austine": "tsc -b && vite build --mode austine",
+    "build:robert": "tsc -b && vite build --mode robert",
     "preview": "vite preview"
   },
   "dependencies": {
