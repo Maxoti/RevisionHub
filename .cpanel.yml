@@ -1,16 +1,12 @@
 ---
 deployment:
   tasks:
-    # 1. Deploy compiled frontend files to www.revisionvault.co.ke
-    - /bin/cp -R frontend/dist/* /home1/revision/public_html/
+    - export SITE=/home1/revision/multiexamsportal.co.ke/
+    - export ADMIN=/home1/revision/admin.multiexamsportal.co.ke/
 
-    # 2. Deploy admin pages to admin.revisionvault.co.ke
-    - /bin/cp frontend/dist/upload.html /home1/revision/admin.revisionvault.co.ke/
-    - /bin/cp frontend/dist/payment-history.html /home1/revision/admin.revisionvault.co.ke/
+    # 1. Frontend build to multiexamsportal.co.ke (the "." also copies .htaccess)
+    - /bin/cp -R frontend/dist/. $SITE
 
-    # 3. Deploy backend dist folder
-    - /bin/cp -R backend/dist /home1/revision/backend/
-
-    # 4. Deploy configuration files to the backend root directory
-    - /bin/cp backend/package.json /home1/revision/backend/
-    - /bin/cp backend/package-lock.json /home1/revision/backend/
+    # 2. Admin pages to admin.multiexamsportal.co.ke
+    - /bin/cp frontend/dist/upload.html $ADMIN
+    - /bin/cp frontend/dist/payment-history.html $ADMIN
