@@ -3,6 +3,7 @@ deployment:
   tasks:
     - export SITE=/home1/revision/multiexamsportal.co.ke/
     - export ADMIN=/home1/revision/admin.multiexamsportal.co.ke/
+        - export API=/home1/revision/multiexams-api/
 
     # 1. Frontend build to multiexamsportal.co.ke (the "." also copies .htaccess)
     - /bin/cp -R frontend/dist/. $SITE
