@@ -9,6 +9,7 @@
     "build:mark": "tsc -b && vite build --mode mark",
     "build:austine": "tsc -b && vite build --mode austine",
     "build:robert": "tsc -b && vite build --mode robert",
+    "build:william": "tsc -b && vite build --mode william",
     "preview": "vite preview"
   },
   "dependencies": {
