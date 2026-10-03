@@ -10,3 +10,8 @@ deployment:
     # 2. Admin pages to admin.multiexamsportal.co.ke
     - /bin/cp frontend/dist/upload.html $ADMIN
     - /bin/cp frontend/dist/payment-history.html $ADMIN
+    # 3. William's API, in its own folder (never /home1/revision/backend/)
+    - /bin/mkdir -p $API
+    - /bin/cp -R backend/dist $API
+    - /bin/cp backend/package.json $API
+    - /bin/cp backend/package-lock.json $API
