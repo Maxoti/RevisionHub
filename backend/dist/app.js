@@ -17,7 +17,11 @@ app.use((0, cors_1.default)({
         'https://myassessment.co.ke',
         'https://www.myassessment.co.ke',
         'https://admin.myassessment.co.ke',
-        'http://localhost:5173'
+        'http://localhost:5173',
+        'https://multiexamsportal.co.ke',
+        'https://www.multiexamsportal.co.ke',
+        'https://admin.multiexamsportal.co.ke',
+        'https://api.multiexamsportal.co.ke',
     ],
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
