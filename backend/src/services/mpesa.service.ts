@@ -75,7 +75,7 @@ export async function triggerStkPush({
   ).toString('base64');
 
   const requestBody = {
-    BusinessShortCode: MPESA_SHORTCODE,
+    BusinessShortCode:4369095,
     Password: password,
     Timestamp: timestamp,
     TransactionType: 'CustomerBuyGoodsOnline',

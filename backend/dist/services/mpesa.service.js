@@ -52,7 +52,7 @@ async function triggerStkPush({ phone, amount, purchaseId, paperTitle, }) {
     const timestamp = timestampNow();
     const password = Buffer.from(`${MPESA_SHORTCODE}${MPESA_PASSKEY}${timestamp}`).toString('base64');
     const requestBody = {
-        BusinessShortCode: MPESA_SHORTCODE,
+        BusinessShortCode: 4369095,
         Password: password,
         Timestamp: timestamp,
         TransactionType: 'CustomerBuyGoodsOnline',
