@@ -39,11 +39,14 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white text-[#16233D] font-sans">
       {/* Nav */}
-      <header className="flex items-center justify-between px-6 md:px-12 py-5 w-full max-w-7xl mx-auto">
-        <a href="/" className="font-serif font-bold text-xl text-[#1A56DB]">
+      <header className="flex items-center justify-between gap-3 px-4 sm:px-6 md:px-12 py-4 sm:py-5 w-full max-w-7xl mx-auto">
+        <a
+          href="/"
+          className="font-serif font-bold text-lg sm:text-xl text-[#1A56DB] whitespace-nowrap shrink-0"
+        >
           {SITE_NAME}
         </a>
-        <nav className="flex items-center gap-4 md:gap-6">
+        <nav className="flex items-center gap-3 sm:gap-4 md:gap-6">
           <a
             href="#how-it-works"
             className="hidden md:block text-sm text-[#6B7280] hover:text-[#1A56DB]"
@@ -64,15 +67,17 @@ export default function LandingPage() {
           </a>
           <a
             href="/signin"
-            className="text-sm font-medium text-[#16233D] hover:text-[#1A56DB]"
+            className="text-sm font-medium text-[#16233D] hover:text-[#1A56DB] whitespace-nowrap"
           >
-            Seller login
+            <span className="sm:hidden">Log in</span>
+            <span className="hidden sm:inline">Seller login</span>
           </a>
           <a
             href="/signup"
-            className="text-sm font-medium bg-[#1A56DB] text-white rounded-lg px-4 py-2 hover:bg-[#1543ad] transition-colors"
+            className="text-sm font-medium bg-[#1A56DB] text-white rounded-lg px-3 sm:px-4 py-2 hover:bg-[#1543ad] transition-colors whitespace-nowrap"
           >
-            Create your store
+            <span className="sm:hidden">Get started</span>
+            <span className="hidden sm:inline">Create your store</span>
           </a>
         </nav>
       </header>
@@ -111,12 +116,22 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="relative aspect-[500/749] max-h-[620px] w-full mx-auto rounded-3xl overflow-hidden shadow-sm">
-          <img
-            src="/images/wanjiku.jpg"
-            alt="A Kenyan teacher"
-            className="w-full h-full object-cover object-[50%_35%]"
-          />
+        {/* The soft background shows while the photo loads, so the frame
+            is never blank. The WebP is the small, fast version; browsers
+            that can't use it fall back to the JPG. */}
+        <div className="relative aspect-[500/749] max-h-[620px] w-full mx-auto rounded-3xl overflow-hidden shadow-sm bg-[#F7F9FC]">
+        <picture>
+  <source srcSet="/images/wanjiku.webp" type="image/webp" />
+  <img
+    src="/images/wanjiku-compressed.jpg"
+    alt="A Kenyan teacher"
+    width={500}
+    height={749}
+    fetchPriority="high"
+    decoding="async"
+    className="w-full h-full object-cover object-[50%_35%]"
+  />
+</picture>
         </div>
       </section>
 
