@@ -1,13 +1,9 @@
 deployment:
   tasks:
-    - export SITE=/home1/revision/edusynchub.co.ke/
-    - export ADMIN=/home1/revision/admin.edusynchub.co.ke/
-    - export API=/home1/revision/edusynchub-api/
-    - /bin/cp -R frontend/dist/. $SITE
-    - /bin/cp frontend/dist/upload.html $ADMIN
-    - /bin/cp frontend/dist/vault.html $ADMIN
-    - /bin/cp frontend/dist/payment-history.html $ADMIN
+    - export API=/home/revisio1/revisionhub-saas-api/
     - /bin/mkdir -p $API
     - /bin/cp -R backend/dist $API
     - /bin/cp backend/package.json $API
     - /bin/cp backend/package-lock.json $API
+    - /bin/mkdir -p $API/tmp
+    - /bin/touch $API/tmp/restart.txt

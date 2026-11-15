@@ -6,26 +6,29 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.formatPhone = formatPhone;
 exports.triggerStkPush = triggerStkPush;
 exports.handleStkCallback = handleStkCallback;
+exports.triggerRawBuyGoodsStkPush = triggerRawBuyGoodsStkPush;
 const axios_1 = __importDefault(require("axios"));
 const crypto_1 = __importDefault(require("crypto"));
 const db_1 = __importDefault(require("../config/db"));
 const storage_service_1 = require("./storage.service");
 const notifications_service_1 = require("./notifications.service");
 const paymentLog_service_1 = require("./paymentLog.service");
-const { MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET, MPESA_SHORTCODE, MPESA_PASSKEY, MPESA_ENV, MPESA_CALLBACK_URL, } = process.env;
+const vaultCrypto_1 = require("../utils/vaultCrypto");
+const { APP_MODE, MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET, MPESA_SHORTCODE, MPESA_TILL_NUMBER, MPESA_PASSKEY, MPESA_ENV, MPESA_CALLBACK_URL, } = process.env;
 const BASE_URL = MPESA_ENV === 'production'
     ? 'https://api.safaricom.co.ke'
     : 'https://sandbox.safaricom.co.ke';
-let cachedToken = null;
-let tokenExpiresAt = 0;
-async function getAccessToken() {
-    if (cachedToken && Date.now() < tokenExpiresAt)
-        return cachedToken;
-    const auth = Buffer.from(`${MPESA_CONSUMER_KEY}:${MPESA_CONSUMER_SECRET}`).toString('base64');
+// Cache OAuth tokens per consumerKey so multi-tenant sellers never collide
+const tokenCache = new Map();
+async function getAccessToken(consumerKey, consumerSecret) {
+    const cached = tokenCache.get(consumerKey);
+    if (cached && Date.now() < cached.expiresAt)
+        return cached.token;
+    const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
     const { data } = await axios_1.default.get(`${BASE_URL}/oauth/v1/generate?grant_type=client_credentials`, { headers: { Authorization: `Basic ${auth}` }, timeout: 8000 });
-    cachedToken = data.access_token;
-    tokenExpiresAt = Date.now() + (parseInt(data.expires_in, 10) - 60) * 1000;
-    return cachedToken;
+    const expiresAt = Date.now() + (parseInt(data.expires_in, 10) - 60) * 1000;
+    tokenCache.set(consumerKey, { token: data.access_token, expiresAt });
+    return data.access_token;
 }
 function timestampNow() {
     const d = new Date();
@@ -47,34 +50,71 @@ function formatPhone(phone) {
         p = '254' + p;
     return p;
 }
-async function triggerStkPush({ phone, amount, purchaseId, paperTitle, }) {
-    const token = await getAccessToken();
+async function resolveMpesaConfig(tenantId) {
+    // 1. Premium Single-Tenant Mode (uses .env directly)
+    if (APP_MODE !== 'saas' || !tenantId) {
+        return {
+            consumerKey: MPESA_CONSUMER_KEY,
+            consumerSecret: MPESA_CONSUMER_SECRET,
+            shortCode: MPESA_SHORTCODE,
+            tillNumber: MPESA_TILL_NUMBER || '1574886',
+            passkey: MPESA_PASSKEY,
+        };
+    }
+    // 2. Multi-Tenant SaaS Mode (decrypts seller's AES-256 credentials from DB)
+    const { rows } = await db_1.default.query(`SELECT store_name, status, setup_fee_paid, mpesa_status, subscription_ends_at,
+            till_number, store_number, encrypted_consumer_key, encrypted_consumer_secret, encrypted_passkey
+     FROM public.tenants
+     WHERE id = $1`, [tenantId]);
+    const tenant = rows[0];
+    if (!tenant) {
+        throw new Error('Storefront not found.');
+    }
+    if (tenant.status === 'suspended' || !tenant.setup_fee_paid || tenant.mpesa_status !== 'active') {
+        throw new Error('M-Pesa checkout is not yet activated for this store.');
+    }
+    if (tenant.subscription_ends_at && new Date(tenant.subscription_ends_at) < new Date()) {
+        throw new Error('This store is temporarily unavailable. Please contact the store owner.');
+    }
+    if (!tenant.encrypted_consumer_key || !tenant.encrypted_consumer_secret || !tenant.encrypted_passkey) {
+        throw new Error('Store M-Pesa credentials are incomplete.');
+    }
+    return {
+        consumerKey: (0, vaultCrypto_1.decryptSecret)(tenant.encrypted_consumer_key),
+        consumerSecret: (0, vaultCrypto_1.decryptSecret)(tenant.encrypted_consumer_secret),
+        shortCode: tenant.store_number,
+        tillNumber: tenant.till_number,
+        passkey: (0, vaultCrypto_1.decryptSecret)(tenant.encrypted_passkey),
+    };
+}
+async function triggerStkPush({ phone, amount, purchaseId, paperTitle, tenantId, }) {
+    const config = await resolveMpesaConfig(tenantId);
+    const token = await getAccessToken(config.consumerKey, config.consumerSecret);
     const timestamp = timestampNow();
-    const password = Buffer.from(`${MPESA_SHORTCODE}${MPESA_PASSKEY}${timestamp}`).toString('base64');
+    const password = Buffer.from(`${config.shortCode}${config.passkey}${timestamp}`).toString('base64');
     const requestBody = {
-        BusinessShortCode: MPESA_SHORTCODE,
+        BusinessShortCode: config.shortCode,
         Password: password,
         Timestamp: timestamp,
         TransactionType: 'CustomerBuyGoodsOnline',
         Amount: amount,
         PartyA: formatPhone(phone),
-        PartyB: '1574886',
+        PartyB: config.tillNumber,
         PhoneNumber: formatPhone(phone),
         CallBackURL: MPESA_CALLBACK_URL,
         AccountReference: `PUR${purchaseId}`,
         TransactionDesc: paperTitle.slice(0, 13),
     };
-    // Fire-and-forget: don't block the STK push on this write.
+    // Mask Password in audit logs so encrypted/derived secrets stay clean
+    const safeLogPayload = { ...requestBody, Password: '[REDACTED]' };
     (0, paymentLog_service_1.logPaymentEvent)({
         purchaseId,
         phoneNumber: phone,
         eventType: 'stk_request',
-        payload: requestBody,
+        payload: safeLogPayload,
     }).catch((err) => console.error('[logPaymentEvent stk_request]', err));
     try {
         const { data } = await axios_1.default.post(`${BASE_URL}/mpesa/stkpush/v1/processrequest`, requestBody, { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 });
-        // Fire-and-forget here too — response already returned by Safaricom,
-        // no reason to make the caller wait on a log write.
         (0, paymentLog_service_1.logPaymentEvent)({
             purchaseId,
             checkoutRequestId: data.CheckoutRequestID,
@@ -86,8 +126,6 @@ async function triggerStkPush({ phone, amount, purchaseId, paperTitle, }) {
     }
     catch (err) {
         const error = err;
-        // This one's arguably worth awaiting since we're already in the error
-        // path and about to throw — but even here it's not strictly required.
         (0, paymentLog_service_1.logPaymentEvent)({
             purchaseId,
             phoneNumber: phone,
@@ -100,8 +138,6 @@ async function triggerStkPush({ phone, amount, purchaseId, paperTitle, }) {
 async function handleStkCallback(callbackBody) {
     const body = callbackBody;
     const stkCallback = body?.Body?.stkCallback;
-    // Log the raw callback unconditionally, before any validation —
-    // guarantees we never lose evidence of what Safaricom actually sent.
     await (0, paymentLog_service_1.logPaymentEvent)({
         checkoutRequestId: stkCallback?.CheckoutRequestID || null,
         eventType: 'callback_received',
@@ -137,7 +173,7 @@ async function handleStkCallback(callbackBody) {
                 eventType: 'callback_duplicate',
                 payload: { ResultCode },
             });
-            return; // Already processed — Safaricom retry
+            return;
         }
         if (ResultCode !== 0) {
             await client.query(`UPDATE purchases SET status = 'failed', updated_at = NOW() WHERE id = $1`, [purchase.id]);
@@ -170,7 +206,6 @@ async function handleStkCallback(callbackBody) {
             eventType: 'callback_processed',
             payload: { receipt, ResultCode },
         });
-        // ── Fire notifications outside the transaction ──────────────────
         const signedUrl = await (0, storage_service_1.getSignedDownloadUrl)(purchase.file_key, 24 * 60 * 60);
         (0, notifications_service_1.notifyBuyer)({
             phone: purchase.phone_number,
@@ -191,4 +226,25 @@ async function handleStkCallback(callbackBody) {
     finally {
         client.release();
     }
+}
+async function triggerRawBuyGoodsStkPush(params) {
+    const { creds, phone, amount, accountReference, transactionDesc, callbackUrl } = params;
+    const token = await getAccessToken(creds.consumerKey, creds.consumerSecret);
+    const timestamp = timestampNow();
+    const password = Buffer.from(`${creds.businessShortCode}${creds.passkey}${timestamp}`).toString('base64');
+    const requestBody = {
+        BusinessShortCode: creds.businessShortCode,
+        Password: password,
+        Timestamp: timestamp,
+        TransactionType: 'CustomerBuyGoodsOnline',
+        Amount: Math.ceil(amount),
+        PartyA: formatPhone(phone),
+        PartyB: creds.tillNumber,
+        PhoneNumber: formatPhone(phone),
+        CallBackURL: callbackUrl,
+        AccountReference: accountReference.slice(0, 12),
+        TransactionDesc: transactionDesc.slice(0, 20),
+    };
+    const { data } = await axios_1.default.post(`${BASE_URL}/mpesa/stkpush/v1/processrequest`, requestBody, { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 });
+    return data;
 }
