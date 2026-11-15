@@ -1,5 +1,5 @@
 // frontend/src/pages/SignInPage.tsx
-import React, { useState, type FormEvent } from "react";
+import  { useState, type FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 const API_BASE =
