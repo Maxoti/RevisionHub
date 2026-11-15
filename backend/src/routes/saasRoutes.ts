@@ -301,7 +301,7 @@ export function createSaasRouter(pool: Pool) {
         if (!t.setup_fee_paid) {
           return res.status(400).json({
             error:
-              "Complete your one-time KES 2,550 onboarding via 0729871381 first before monthly renewals.",
+              "Complete your one-time KES 4,000 onboarding via 0729871381 first before monthly renewals.",
           });
         }
 
