@@ -27,11 +27,11 @@
     body { margin: 0; background: var(--bg); color: var(--slate-900); }
     svg.i { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
     svg.i.fill { fill: currentColor; stroke: none; }
-    .container { max-width: 1320px; margin: 0 auto; padding: 18px 20px 40px; }
+    .container { max-width: 1800px; margin: 0 auto; padding: 22px clamp(16px, 3vw, 48px) 48px; }
 
     /* ---------- Top nav ---------- */
     .nav { background: var(--green-dark); color: #fff; }
-    .nav-in { max-width: 1320px; margin: 0 auto; padding: 0 20px; height: 58px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-in { max-width: 1800px; margin: 0 auto; padding: 0 clamp(16px, 3vw, 48px); height: 58px; display: flex; align-items: center; justify-content: space-between; }
     .nav-left { display: flex; align-items: center; gap: 16px; }
     .nav-brand { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 800; }
     .nav-brand svg { font-size: 32px; }
@@ -84,25 +84,31 @@
     .kpi.mrr     { background: #eff6ff; border-color: #bfdbfe; } .kpi.mrr .ic, .kpi.mrr .kpi-label { color: #1e40af; } .kpi.mrr .kpi-val { color: #1e3a8a; }
 
     /* ---------- Workspace ---------- */
-    .workspace { display: grid; grid-template-columns: 1.75fr 1fr; gap: 20px; align-items: start; }
+    .workspace { display: grid; grid-template-columns: 1.75fr 1fr; gap: 22px; align-items: stretch; min-height: calc(100vh - 430px); }
     @media (max-width: 1050px) { .workspace { grid-template-columns: 1fr; } }
-    .card { background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(15,23,42,.05); }
+    .card { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(15,23,42,.05); }
     .card-head { background: linear-gradient(180deg, #166534, #14532d); color: #fff; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; font-size: 21px; font-weight: 800; }
     .card-head .t { display: flex; align-items: center; gap: 10px; }
     .card-head button { background: none; border: 0; color: #fff; cursor: pointer; font-size: 22px; display: grid; place-items: center; }
-    .card-body { padding: 14px 16px; }
+    .card-body { padding: 14px 16px; flex: 1; }
 
     .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
     .tab { height: 40px; padding: 0 18px; border-radius: 8px; border: 1.5px solid var(--border); background: #fff; cursor: pointer; font-size: 15px; font-weight: 700; color: var(--slate-700); display: inline-flex; align-items: center; gap: 8px; }
     .tab .dot { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 11px; }
     .tab.active { background: #15803d; color: #fff; border-color: #15803d; }
     .searchbar { display: flex; gap: 10px; margin-bottom: 12px; }
-    .searchbar .field { flex: 1; display: flex; align-items: center; gap: 10px; border: 1.5px solid #93c5fd; border-radius: 8px; padding: 0 12px; background: #fff; color: #2563eb; }
+    .searchbar .field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 1.5px solid #93c5fd; border-radius: 8px; padding: 0 12px; background: #fff; color: #2563eb; }
+    .searchbar input[type="search"] { -webkit-appearance: none; appearance: none; }
+    .searchbar .btn { flex-shrink: 0; }
+    @media (max-width: 600px) {
+      .searchbar { flex-direction: column; }
+      .searchbar .btn { width: 100%; height: 44px; }
+    }
     .searchbar input { flex: 1; min-width: 0; height: 40px; border: 0; outline: 0; font-size: 15px; color: var(--slate-900); }
 
     /* ---------- Table ---------- */
     .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 760px; }
+    table { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 760px; }
     th { text-align: left; padding: 11px 10px; background: #dcfce7; color: #14532d; font-size: 14px; font-weight: 800; border-right: 1px solid #bbf7d0; white-space: nowrap; }
     td { padding: 10px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); vertical-align: middle; }
     th:last-child, td:last-child { border-right: 0; }
@@ -132,7 +138,7 @@
     .pager button:disabled { opacity: .45; cursor: not-allowed; }
 
     /* ---------- Vault panel ---------- */
-    .vault-empty { text-align: center; color: var(--slate-500); padding: 34px 10px; font-size: 15px; }
+    .vault-empty { text-align: center; color: var(--slate-500); padding: 60px 14px; font-size: 16px; }
     .cfg-banner { display: flex; align-items: center; gap: 12px; background: #dcfce7; border: 1.5px solid #86efac; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
     .cfg-banner .u { font-size: 30px; color: var(--green-dark); }
     .cfg-banner strong { display: block; font-size: 16px; }
@@ -208,7 +214,7 @@
       <svg class="i shield" style="stroke-width:2"><use href="#i-shield"/></svg>
       <label for="adminSecret">Super-Admin Secret:</label>
       <div class="secret-wrap">
-        <input type="password" id="adminSecret" placeholder="Enter Super-Admin Secret" autocomplete="off" />
+        <input type="password" id="adminSecret" name="vault_secret" placeholder="Enter Super-Admin Secret" autocomplete="new-password" />
         <button type="button" aria-label="Show or hide secret" onclick="toggleInput('adminSecret')"><svg class="i"><use href="#i-eye"/></svg></button>
       </div>
       <button class="btn btn-green" onclick="unlockAndLoad()"><svg class="i"><use href="#i-lock"/></svg> Unlock Vault</button>
@@ -240,7 +246,7 @@
 
           <div class="searchbar">
             <label class="field"><svg class="i" style="font-size:20px"><use href="#i-search"/></svg>
-              <input type="text" id="searchInput" placeholder="Search by Store Name, Slug (e.g. /jane), Username or Till Number..." /></label>
+              <input type="search" id="searchInput" name="client_search" autocomplete="off" placeholder="Search by Store Name, Slug (e.g. /jane), Username or Till Number..." /></label>
             <button class="btn btn-green" id="searchBtn"><svg class="i"><use href="#i-search"/></svg> Search</button>
           </div>
 
