@@ -1,9 +1,23 @@
+---
 deployment:
   tasks:
+    # Backend only. Vercel builds and hosts the frontend.
+    # API is the Node.js app's "Application root" in Setup Node.js App.
+    # NODEVENV is the path in the "source .../activate" banner on that same
+    # page. Both must match what cPanel shows for this app.
     - export API=/home/revisio1/revisionhub-saas-api/
+    - export NODEVENV=/home/revisio1/nodevenv/revisionhub-saas-api/22
     - /bin/mkdir -p $API
+
+    # Replace the old build so deleted files don't linger on the server.
+    - /bin/rm -rf $API/dist
     - /bin/cp -R backend/dist $API
     - /bin/cp backend/package.json $API
     - /bin/cp backend/package-lock.json $API
+
+    # Install production dependencies in the live folder, not in the repo
+    # checkout, so cPanel's "no uncommitted changes" check keeps passing.
+    - source $NODEVENV/bin/activate && cd $API && npm ci --omit=dev
+
     - /bin/mkdir -p $API/tmp
     - /bin/touch $API/tmp/restart.txt
