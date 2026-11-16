@@ -242,11 +242,11 @@
       <div class="grid-2">
         <div class="field">
           <label for="adminUser">Admin username</label>
-          <input type="text" id="adminUser" autocomplete="username" required />
+          <input type="text" id="adminUser" name="store_username" autocomplete="off" required />
         </div>
         <div class="field">
           <label for="adminPass">Admin password</label>
-          <input type="password" id="adminPass" autocomplete="current-password" required />
+          <input type="password" id="adminPass" name="store_password" autocomplete="new-password" required />
         </div>
       </div>
 
@@ -302,7 +302,7 @@
         </div>
         <div class="field">
           <label for="price">Price (KES)</label>
-          <input type="number" id="price" min="0" step="1" placeholder="50" required />
+          <input type="number" id="price" min="1" max="150000" step="1" placeholder="50" required />
         </div>
       </div>
 
@@ -355,25 +355,34 @@
 
   <script>
     /* ====================================================================
-       CONFIG: point these at your real backend.
-       Set DEMO = false in production. With DEMO = true the page shows the
-       active card AND the expired bar together, exactly like the mockup.
+       CONFIG. Routes come from saasRoutes.ts (mounted under /api).
+       Login goes through authRoutes.ts: POST /api/tenants/login must return
+       { token } (adjust LOGIN_FIELDS / pickToken below if it differs).
        ==================================================================== */
-    const DEMO = true;
+    const API_BASE   = "https://api.edusynchub.co.ke";
+    const SUPPORT_WA = "254729871381";                      // onboarding WhatsApp number
+
     const API = {
-      status:  "/api/seller/status",     // GET  -> { setup_fee_paid, expires_at, store_url, whatsapp_url }
-      upload:  "/api/seller/papers",     // POST multipart form
-      papers:  "/api/seller/papers",     // GET  list, POST/DELETE per your API
-      renew:   "/api/seller/renew-stk",  // POST { phone }
+      login:     "/api/tenants/login",                 // POST { username, password } -> { token }
+      dashboard: "/api/tenants/papers",                // GET  -> { tenant, papers }
+      uploadUrl: "/api/tenants/upload-url",            // POST { contentType, fileName, curriculum, year } -> { uploadUrl, fileKey }
+      save:      "/api/tenants/papers/save",           // POST paper details + fileKey
+      remove:    "/api/tenants/papers",                // DELETE /:paperId
+      renew:     "/api/tenants/billing/renewal-stk",   // POST { phone }  (owner only)
     };
+    Object.keys(API).forEach((k) => (API[k] = API_BASE + API[k]));
+    const loginBody = (username, password) => ({ username, password });
+    const pickToken = (d) => d.token || d.accessToken || d.jwt;
 
     const GRADES = {
       "CBC":   ["PP1","PP2","Grade 1","Grade 2","Grade 3","Grade 4","Grade 5","Grade 6","Grade 7","Grade 8","Grade 9"],
       "8-4-4": ["Class 7","Class 8","Form 1","Form 2","Form 3","Form 4"],
     };
+    const CONTENT_TYPES = { pdf: "application/pdf", zip: "application/zip" };
 
     const $ = (id) => document.getElementById(id);
     let subscriptionActive = true;
+    let session = { token: null, user: "" };       // held in memory only; never written to storage
 
     /* ---------- toast ---------- */
     function toast(msg, ok = true) {
@@ -382,8 +391,42 @@
       t.style.background = ok ? "#16a34a" : "#dc2626";
       t.style.display = "block";
       clearTimeout(toast._t);
-      toast._t = setTimeout(() => (t.style.display = "none"), 3500);
+      toast._t = setTimeout(() => (t.style.display = "none"), 4500);
     }
+
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    /* ---------- login + authenticated requests ---------- */
+    async function login(force = false) {
+      const username = $("adminUser").value.trim();
+      const password = $("adminPass").value;
+      if (!username || !password) throw new Error("Enter your admin username and password first.");
+      if (!force && session.token && session.user === username) return session.token;
+
+      const res = await fetch(API.login, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(loginBody(username, password)),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Login failed. Check your username and password.");
+      const token = pickToken(data);
+      if (!token) throw new Error("Login succeeded but the server returned no token.");
+      session = { token, user: username };
+      return token;
+    }
+
+    async function authed(path, opts = {}, retry = true) {
+      const token = await login();
+      const res = await fetch(path, { ...opts, headers: { Authorization: "Bearer " + token, ...(opts.headers || {}) } });
+      if (res.status === 401 && retry) { session.token = null; await login(true); return authed(path, opts, false); }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+      return data;
+    }
+    const postJson = (path, body) => authed(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
     /* ---------- form behaviour ---------- */
     function onCurriculumChange() {
@@ -405,60 +448,48 @@
 
     function updateTitle() {
       const t = $("title");
-      if (t.dataset.manual) return;                      // don't overwrite a hand-typed title
+      if (t.dataset.manual) return;
       const parts = [
         $("grade").value,
         $("isBundle").checked ? "Full Set" : $("subject").value.trim(),
-        $("paperType").value,
-        $("term").value,
-        $("year").value,
+        $("paperType").value, $("term").value, $("year").value,
       ].filter(Boolean);
       t.value = parts.join(" ");
     }
 
-    /* ---------- subscription UI ---------- */
+    /* ---------- subscription + storefront UI ---------- */
     function fmtDate(iso) {
       return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     }
 
-    function renderStatus(s) {
-      $("onboardingBanner").style.display = s.setup_fee_paid ? "none" : "flex";
-      $("activeStatusGrid").style.display = s.setup_fee_paid ? "grid" : "none";
-      if (s.whatsapp_url) $("whatsappActivateBtn").href = s.whatsapp_url;
+    function renderStatus(t) {
+      const paid = Boolean(t.setup_fee_paid);
+      $("onboardingBanner").style.display = paid ? "none" : "flex";
+      $("activeStatusGrid").style.display = paid ? "grid" : "none";
+      $("whatsappActivateBtn").href = `https://wa.me/${SUPPORT_WA}?text=` +
+        encodeURIComponent(`Hello, I have sent the KES 4,000 setup fee for ${t.store_name || "my store"}.`);
 
-      if (s.store_url) {
+      if (t.slug) {
+        const store = `${STORE_BASE}/${t.slug}`;
         $("storeLinkBar").style.display = "flex";
-        $("publicStoreUrl").textContent = s.store_url;
-        $("visitStoreBtn").href = s.store_url;
+        $("publicStoreUrl").textContent = store;
+        $("visitStoreBtn").href = store;
       }
-      if (!s.setup_fee_paid) { subscriptionActive = true; return; }
 
-      const expires = new Date(s.expires_at);
-      const expired = expires.getTime() < Date.now();
+      if (!paid) { subscriptionActive = true; $("uploadBtn").disabled = false; $("expiredBar").classList.remove("show"); return; }
+
+      const ends = t.subscription_ends_at;
+      const expired = Boolean(ends) && new Date(ends) < new Date();
       subscriptionActive = !expired;
 
       $("statusCardBox").classList.toggle("expired", expired);
-      $("statusCardValue").innerHTML = expired
-        ? `Expired on <strong>${fmtDate(s.expires_at)}</strong>`
-        : `Active until <strong>${fmtDate(s.expires_at)}</strong>`;
-      $("expiredText").textContent = `Your subscription expired on ${fmtDate(s.expires_at)}. Please renew to continue uploading papers.`;
-      $("expiredBar").classList.toggle("show", expired || DEMO);
+      $("statusCardValue").innerHTML = !ends
+        ? "<strong>Active</strong>"
+        : expired ? `Expired on <strong>${fmtDate(ends)}</strong>` : `Active until <strong>${fmtDate(ends)}</strong>`;
+      $("expiredText").textContent = ends
+        ? `Your subscription expired on ${fmtDate(ends)}. Please renew to continue uploading papers.` : "";
+      $("expiredBar").classList.toggle("show", expired);
       $("uploadBtn").disabled = expired;
-    }
-
-    async function loadStatus() {
-      if (DEMO) {
-        renderStatus({ setup_fee_paid: true, expires_at: "2026-12-14", store_url: "" });
-        $("expiredText").textContent = "Your subscription expired on Oct 14, 2026. Please renew to continue uploading papers.";
-        return;
-      }
-      try {
-        const res = await fetch(API.status, { credentials: "include" });
-        if (!res.ok) throw new Error();
-        renderStatus(await res.json());
-      } catch {
-        toast("Could not load subscription status", false);
-      }
     }
 
     function scrollToRenew() {
@@ -468,21 +499,16 @@
 
     async function triggerRenewalStk() {
       const phone = $("renewPhone").value.trim().replace(/\s+/g, "");
-      if (!/^(?:0|\+?254)?7\d{8}$|^(?:0|\+?254)?1\d{8}$/.test(phone)) {
-        return toast("Enter a valid M-Pesa phone number", false);
-      }
+      if (!/^(?:0|\+?254)[71]\d{8}$/.test(phone)) return toast("Enter a valid M-Pesa phone number", false);
       const btn = $("requestStkBtn");
       btn.disabled = true;
       try {
-        const res = await fetch(API.renew, {
-          method: "POST", credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone }),
-        });
-        if (!res.ok) throw new Error();
-        toast("STK push sent. Check your phone and enter your M-Pesa PIN.");
-      } catch {
-        toast("Could not send the STK request", false);
+        await postJson(API.renew, { phone });
+        toast("STK push sent. Enter your M-Pesa PIN. Your status will refresh shortly.");
+        setTimeout(loadPapers, 25000);
+        setTimeout(loadPapers, 60000);
+      } catch (e) {
+        toast(e.message || "Could not send the STK request", false);
       } finally {
         btn.disabled = false;
       }
@@ -492,92 +518,100 @@
       navigator.clipboard.writeText($("publicStoreUrl").textContent).then(() => toast("Link copied"));
     }
 
-    /* ---------- upload + manage ---------- */
-    function authHeader() {
-      // Adjust to whatever your backend expects for admin auth.
-      return { Authorization: "Basic " + btoa(`${$("adminUser").value}:${$("adminPass").value}`) };
-    }
-
+    /* ---------- upload (3 steps: get signed URL, send file to storage, save record) ---------- */
     async function handleUpload(e) {
       e.preventDefault();
       if (!subscriptionActive) return toast("Subscription expired. Please renew first.", false);
 
       const file = $("file").files[0];
       if (!file) return toast("Choose a file to upload", false);
-      const isZip = /\.zip$/i.test(file.name);
-      if ($("isBundle").checked && !isZip) return toast("Full Set bundles must be a .zip file", false);
-      if (!$("isBundle").checked && !/\.pdf$/i.test(file.name)) return toast("Single papers must be a PDF", false);
+      const ext = (file.name.split(".").pop() || "").toLowerCase();
+      const isBundle = $("isBundle").checked;
+      if (isBundle && ext !== "zip") return toast("Full Set bundles must be a .zip file", false);
+      if (!isBundle && ext !== "pdf") return toast("Single papers must be a PDF", false);
+      const contentType = CONTENT_TYPES[ext];
 
-      const fd = new FormData();
-      fd.append("curriculum", $("curriculum").value);
-      fd.append("grade", $("grade").value);
-      fd.append("subject", $("subject").value.trim());
-      fd.append("type", $("paperType").value);
-      fd.append("term", $("term").value);
-      fd.append("year", $("year").value);
-      fd.append("price", $("price").value);
-      fd.append("is_bundle", $("isBundle").checked ? "1" : "0");
-      fd.append("title", $("title").value.trim());
-      fd.append("file", file);
+      const title = $("title").value.trim();
+      if (!title) return toast("Enter a title, or fill in the fields so one is generated", false);
+      const price = Number($("price").value);
+      if (!Number.isFinite(price) || price < 1 || price > 150000) return toast("Price must be between KES 1 and 150,000", false);
 
       const btn = $("uploadBtn");
       btn.disabled = true;
       try {
-        const res = await fetch(API.upload, { method: "POST", headers: authHeader(), body: fd });
-        if (!res.ok) throw new Error();
+        toast("Uploading… please wait");
+        const { uploadUrl, fileKey } = await postJson(API.uploadUrl, {
+          contentType, fileName: file.name, curriculum: $("curriculum").value, year: Number($("year").value),
+        });
+
+        let put;
+        try {
+          put = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": contentType }, body: file });
+        } catch {
+          throw new Error("Could not reach file storage. Check the storage bucket's CORS settings.");
+        }
+        if (!put.ok) throw new Error("File upload to storage failed. Try again.");
+
+        await postJson(API.save, {
+          title, fileKey,
+          subject: $("subject").value.trim(), curriculum: $("curriculum").value, grade: $("grade").value,
+          examType: $("paperType").value, term: $("term").value, year: Number($("year").value),
+          price: Math.round(price), isBundle,
+        });
+
         toast("Paper uploaded");
         $("file").value = "";
         $("title").value = ""; $("title").dataset.manual = "";
         loadPapers();
-      } catch {
-        toast("Upload failed. Check your details and try again.", false);
+      } catch (err) {
+        toast(err.message || "Upload failed. Check your details and try again.", false);
       } finally {
         btn.disabled = !subscriptionActive;
       }
     }
 
+    /* ---------- manage papers ---------- */
+    function renderPapers(list) {
+      const box = $("papersList");
+      if (!list.length) { box.innerHTML = '<div class="papers-empty">No papers uploaded yet.</div>'; return; }
+      box.innerHTML = list.map((p) => {
+        const meta = [p.curriculum, p.grade, p.exam_type, p.year].filter(Boolean).join(" · ");
+        return `
+          <div class="paper-row">
+            <div><strong>${escapeHtml(p.title)}</strong>${p.is_bundle ? " <small>(Full Set)</small>" : ""}<br>
+              <small>KES ${Number(p.price)}${meta ? " · " + escapeHtml(meta) : ""}</small></div>
+            <button type="button" class="btn btn-red" style="height:34px" onclick="deletePaper(${Number(p.id)})">Delete</button>
+          </div>`;
+      }).join("");
+    }
+
     async function loadPapers() {
       const box = $("papersList");
-      if (!$("adminUser").value || !$("adminPass").value) {
-        box.innerHTML = '<div class="papers-empty">Enter admin credentials above, then click Refresh to load papers.</div>';
-        return;
-      }
       box.innerHTML = '<div class="papers-empty">Loading…</div>';
       try {
-        const res = await fetch(API.papers, { headers: authHeader() });
-        if (!res.ok) throw new Error();
-        const papers = await res.json();
-        box.innerHTML = papers.length
-          ? papers.map((p) => `
-              <div class="paper-row">
-                <div><strong>${escapeHtml(p.title)}</strong><br><small>KES ${Number(p.price)} · ${escapeHtml(p.curriculum || "")}</small></div>
-                <button type="button" class="btn btn-red" style="height:34px" onclick="deletePaper('${encodeURIComponent(p.id)}')">Delete</button>
-              </div>`).join("")
-          : '<div class="papers-empty">No papers uploaded yet.</div>';
-      } catch {
-        box.innerHTML = '<div class="papers-empty">Could not load papers. Check your credentials.</div>';
+        const data = await authed(API.dashboard);
+        renderStatus(data.tenant || {});
+        renderPapers(data.papers || []);
+      } catch (e) {
+        box.innerHTML = `<div class="papers-empty">${escapeHtml(e.message)}</div>`;
       }
     }
 
     async function deletePaper(id) {
       if (!confirm("Delete this paper?")) return;
       try {
-        const res = await fetch(`${API.papers}/${id}`, { method: "DELETE", headers: authHeader() });
-        if (!res.ok) throw new Error();
+        await authed(`${API.remove}/${id}`, { method: "DELETE" });
         toast("Paper deleted");
         loadPapers();
-      } catch {
-        toast("Could not delete the paper", false);
+      } catch (e) {
+        toast(e.message || "Could not delete the paper", false);
       }
-    }
-
-    function escapeHtml(s) {
-      return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
 
     /* ---------- init ---------- */
     $("year").value = new Date().getFullYear();
-    loadStatus();
+    $("statusCardValue").textContent = "Sign in below, then click Refresh";
+    $("activeStatusGrid").style.display = "grid";
   </script>
 </body>
 </html>

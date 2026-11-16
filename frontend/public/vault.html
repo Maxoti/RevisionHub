@@ -328,7 +328,7 @@
        can see the page working. Set DEMO = false in production.
        The secret is sent as the x-admin-secret header; adapt to your auth.
        ==================================================================== */
-    const DEMO = true;
+    const DEMO = false;
     const API = {
       tenants: "/api/admin/tenants",          // GET  -> [{id,name,slug,owner,phone,till,head_office,operator,status,expires_at}]
       save:    "/api/admin/tenants/:id/keys", // POST { till, head_office, consumer_key, consumer_secret, passkey }

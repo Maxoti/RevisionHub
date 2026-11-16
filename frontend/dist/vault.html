@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multiexams Portal — Super-Admin M-Pesa Vault</title>
+  <style>
+    :root {
+      --green: #16a34a;
+      --green-dark: #166534;
+      --green-deep: #14532d;
+      --green-bg: #dcfce7;
+      --green-tint: #ecfdf5;
+      --amber: #d97706;
+      --amber-bg: #fef3c7;
+      --red: #dc2626;
+      --red-bg: #fee2e2;
+      --blue: #1d4ed8;
+      --blue-bg: #dbeafe;
+      --slate-900: #0f172a;
+      --slate-700: #334155;
+      --slate-500: #64748b;
+      --border: #d7dee8;
+      --bg: #f8fafc;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--slate-900); }
+    svg.i { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    svg.i.fill { fill: currentColor; stroke: none; }
+    .container { max-width: 1800px; margin: 0 auto; padding: 22px clamp(16px, 3vw, 48px) 48px; }
+
+    /* ---------- Top nav ---------- */
+    .nav { background: var(--green-dark); color: #fff; }
+    .nav-in { max-width: 1800px; margin: 0 auto; padding: 0 clamp(16px, 3vw, 48px); height: 58px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-left { display: flex; align-items: center; gap: 16px; }
+    .nav-brand { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 800; }
+    .nav-brand svg { font-size: 32px; }
+    .nav-sep { width: 1px; height: 26px; background: rgba(255,255,255,.55); }
+    .nav-page { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 17px; }
+    .nav-user { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: #bbf7d0; color: var(--green-dark); display: grid; place-items: center; font-weight: 800; font-size: 14px; }
+    @media (max-width: 720px) { .nav-page, .nav-sep { display: none; } }
+
+    /* ---------- Title + unlock ---------- */
+    .title-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+    .title-row .lock { width: 44px; height: 44px; border-radius: 10px; background: var(--green-deep); color: #fff; display: grid; place-items: center; font-size: 24px; }
+    .title-row h1 { margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -.01em; }
+    .title-row p { margin: 2px 0 0; color: var(--slate-700); font-size: 16px; }
+
+    .unlock-bar {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      background: var(--green-tint); border: 1.5px solid #a7f3d0; border-radius: 10px; padding: 10px 16px; margin-bottom: 18px;
+    }
+    .unlock-bar .shield { color: var(--green-dark); font-size: 28px; }
+    .unlock-bar label { font-weight: 700; font-size: 17px; }
+    .secret-wrap { display: flex; flex: 0 1 340px; }
+    .secret-wrap input { flex: 1; min-width: 0; height: 42px; padding: 0 14px; border: 1px solid var(--border); border-right: 0; border-radius: 8px 0 0 8px; font-size: 16px; background: #fff; }
+    .secret-wrap button { width: 46px; border: 1px solid var(--border); border-radius: 0 8px 8px 0; background: #f1f5f9; cursor: pointer; color: var(--slate-700); font-size: 20px; display: grid; place-items: center; }
+
+    /* ---------- Buttons ---------- */
+    .btn { height: 40px; padding: 0 16px; border-radius: 8px; border: 1.5px solid transparent; font-weight: 700; cursor: pointer; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: filter .15s, background .15s; }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-green:hover:not(:disabled) { background: #15803d; }
+    .btn-dark { background: #15803d; color: #fff; }
+    .btn-blue { background: #2563eb; color: #fff; }
+    .btn-amber { background: #f59e0b; color: #fff; }
+    .btn-outline-green { background: #fff; border-color: var(--green); color: var(--green-dark); }
+    .btn-outline-red { background: #fff; border-color: var(--red); color: var(--red); }
+    .btn-sm { height: 34px; padding: 0 12px; font-size: 14px; }
+
+    /* ---------- KPI cards ---------- */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 18px; }
+    @media (max-width: 1000px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .kpi-grid { grid-template-columns: 1fr; } }
+    .kpi { display: flex; align-items: center; gap: 14px; border-radius: 12px; padding: 14px 18px; border: 1.5px solid; min-height: 112px; }
+    .kpi .ic { font-size: 44px; flex-shrink: 0; }
+    .kpi-label { font-size: 17px; font-weight: 700; }
+    .kpi-val { font-size: 38px; font-weight: 800; line-height: 1.05; margin: 2px 0; }
+    .kpi-sub { font-size: 14px; color: var(--slate-700); }
+    .kpi.pending { background: #fff7e6; border-color: #fcd9a0; } .kpi.pending .ic, .kpi.pending .kpi-label, .kpi.pending .kpi-val { color: var(--amber); }
+    .kpi.active  { background: #ecfdf5; border-color: #a7f3d0; } .kpi.active  .ic, .kpi.active  .kpi-label { color: var(--green); } .kpi.active .kpi-val { color: var(--green); }
+    .kpi.expired { background: #fef2f2; border-color: #fecaca; } .kpi.expired .ic, .kpi.expired .kpi-label, .kpi.expired .kpi-val { color: var(--red); }
+    .kpi.mrr     { background: #eff6ff; border-color: #bfdbfe; } .kpi.mrr .ic, .kpi.mrr .kpi-label { color: #1e40af; } .kpi.mrr .kpi-val { color: #1e3a8a; }
+
+    /* ---------- Workspace ---------- */
+    .workspace { display: grid; grid-template-columns: 1.75fr 1fr; gap: 22px; align-items: stretch; min-height: calc(100vh - 430px); }
+    @media (max-width: 1050px) { .workspace { grid-template-columns: 1fr; } }
+    .card { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(15,23,42,.05); }
+    .card-head { background: linear-gradient(180deg, #166534, #14532d); color: #fff; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; font-size: 21px; font-weight: 800; }
+    .card-head .t { display: flex; align-items: center; gap: 10px; }
+    .card-head button { background: none; border: 0; color: #fff; cursor: pointer; font-size: 22px; display: grid; place-items: center; }
+    .card-body { padding: 14px 16px; flex: 1; }
+
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .tab { height: 40px; padding: 0 18px; border-radius: 8px; border: 1.5px solid var(--border); background: #fff; cursor: pointer; font-size: 15px; font-weight: 700; color: var(--slate-700); display: inline-flex; align-items: center; gap: 8px; }
+    .tab .dot { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 11px; }
+    .tab.active { background: #15803d; color: #fff; border-color: #15803d; }
+    .searchbar { display: flex; gap: 10px; margin-bottom: 12px; }
+    .searchbar .field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 1.5px solid #93c5fd; border-radius: 8px; padding: 0 12px; background: #fff; color: #2563eb; }
+    .searchbar input[type="search"] { -webkit-appearance: none; appearance: none; }
+    .searchbar .btn { flex-shrink: 0; }
+    @media (max-width: 600px) {
+      .searchbar { flex-direction: column; }
+      .searchbar .btn { width: 100%; height: 44px; }
+    }
+    .searchbar input { flex: 1; min-width: 0; height: 40px; border: 0; outline: 0; font-size: 15px; color: var(--slate-900); }
+
+    /* ---------- Table ---------- */
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 760px; }
+    th { text-align: left; padding: 11px 10px; background: #dcfce7; color: #14532d; font-size: 14px; font-weight: 800; border-right: 1px solid #bbf7d0; white-space: nowrap; }
+    td { padding: 10px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); vertical-align: middle; }
+    th:last-child, td:last-child { border-right: 0; }
+    tr.selected-row td { background: #f0fdf4; }
+    .store-name { color: #1d4ed8; font-weight: 800; font-size: 16px; text-decoration: none; }
+    .store-slug { font-size: 14px; color: var(--slate-700); }
+    .wa { color: #1d4ed8; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+    .wa svg { color: #22c55e; font-size: 18px; }
+    .till-cell { display: flex; align-items: center; justify-content: space-between; gap: 10px; line-height: 1.4; }
+    .icon-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: #fff; cursor: pointer; color: #1d4ed8; display: grid; place-items: center; font-size: 17px; flex-shrink: 0; }
+    .icon-btn:hover { background: #eff6ff; }
+
+    .badge { padding: 6px 10px; border-radius: 8px; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; border: 1.5px solid; }
+    .badge-pending { background: #fef3c7; color: #b45309; border-color: #fcd34d; }
+    .badge-active { background: var(--green-bg); color: #166534; border-color: #86efac; }
+    .badge-expired { background: var(--red-bg); color: var(--red); border-color: #fca5a5; }
+    .badge-unpaid { background: var(--blue-bg); color: var(--blue); border-color: #93c5fd; }
+    .exp-date { font-weight: 700; font-size: 15px; }
+    .exp-days { font-size: 14px; font-weight: 600; }
+    .exp-days.ok { color: #16a34a; } .exp-days.bad { color: var(--red); } .exp-days.na { color: var(--slate-500); font-weight: 400; }
+    .empty-row td { text-align: center; padding: 28px; color: var(--slate-500); }
+
+    .table-foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding-top: 12px; font-size: 15px; color: var(--slate-700); }
+    .pager { display: flex; gap: 6px; }
+    .pager button { min-width: 36px; height: 36px; border-radius: 8px; border: 1.5px solid var(--border); background: #fff; cursor: pointer; font-weight: 700; font-size: 15px; }
+    .pager button.on { background: #15803d; color: #fff; border-color: #15803d; }
+    .pager button:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* ---------- Vault panel ---------- */
+    .vault-empty { text-align: center; color: var(--slate-500); padding: 60px 14px; font-size: 16px; }
+    .cfg-banner { display: flex; align-items: center; gap: 12px; background: #dcfce7; border: 1.5px solid #86efac; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+    .cfg-banner .u { font-size: 30px; color: var(--green-dark); }
+    .cfg-banner strong { display: block; font-size: 16px; }
+    .cfg-banner span { font-size: 14px; }
+    .vf { margin-bottom: 8px; }
+    .vf label { display: block; font-weight: 800; font-size: 15px; margin-bottom: 4px; }
+    .vf .row { display: flex; gap: 8px; }
+    .vf input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 15px; background: #fff; }
+    .vf input:focus, .stk input:focus, .searchbar .field:focus-within { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,163,74,.14); }
+    .vf .icon-btn { width: 42px; height: 40px; background: #f1f5f9; color: var(--slate-700); }
+    .stk { background: #dbeafe; border-radius: 8px; padding: 8px 10px; margin: 12px 0; }
+    .stk .lbl { font-weight: 800; color: #1e3a8a; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .stk .row { display: flex; gap: 8px; }
+    .stk input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid #93c5fd; border-radius: 6px; font-size: 15px; background: #fff; }
+    .btn-wide { width: 100%; height: 44px; font-size: 16px; }
+    .vault-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+
+    /* ---------- Toast ---------- */
+    .toast { position: fixed; top: 74px; right: 22px; min-width: 300px; padding: 14px 16px; border-radius: 10px; color: #fff; font-weight: 800; font-size: 16px; z-index: 999; display: none; align-items: center; gap: 12px; box-shadow: 0 10px 24px rgba(0,0,0,.18); }
+    .toast.show { display: flex; }
+    .toast .tick { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff; display: grid; place-items: center; font-size: 18px; }
+    .toast .x { margin-left: auto; background: none; border: 0; color: #fff; cursor: pointer; font-size: 18px; display: grid; place-items: center; }
+  </style>
+</head>
+<body>
+  <!-- Icon sprite -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-cap" viewBox="0 0 24 24"><path d="m12 3 10 5-10 5L2 8l10-5Z"/><path d="M6 10.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-5.5M22 8v6"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3 8.2 7.5 9.5 4.5-1.3 7.5-4.9 7.5-9.5V6L12 3Z"/><path d="m9 12 2.2 2.2L15.5 10"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.4c2.2.7 3.5 2.6 3.5 5.6"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M21.5 2.5 2.8 10.2c-.8.3-.8 1.4 0 1.7l5.3 2 2 5.3c.3.8 1.4.8 1.7 0L21.5 2.5Z"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-4.2L4 8.5M4 4v4.5h4.5M4 13a8 8 0 0 0 14.5 4.2L20 15.5M20 20v-4.5h-4.5"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-bars" viewBox="0 0 24 24"><path d="M5 20v-6M12 20V8M19 20V4" stroke-width="4"/></symbol>
+    <symbol id="i-wa" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.2 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.2-.7-2.7-1.1-4.4-3.8-4.6-4-.1-.2-1.1-1.4-1.1-2.7s.7-1.9.9-2.2c.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.3.3c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.8-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.8-.1 1.4Z" fill="currentColor" stroke="none"/></symbol>
+  </svg>
+
+  <!-- Top navigation -->
+  <header class="nav">
+    <div class="nav-in">
+      <div class="nav-left">
+        <div class="nav-brand"><svg class="i" style="stroke-width:1.6"><use href="#i-cap"/></svg> Multiexams Portal</div>
+        <span class="nav-sep"></span>
+        <div class="nav-page"><svg class="i"><use href="#i-shield"/></svg> Super-Admin Dashboard</div>
+      </div>
+      <div class="nav-user"><span class="avatar">SA</span> Super Admin <span style="font-size:11px">▾</span></div>
+    </div>
+  </header>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <div class="container">
+    <div class="title-row">
+      <div class="lock"><svg class="i"><use href="#i-lock"/></svg></div>
+      <div>
+        <h1>Super-Admin M-Pesa Vault</h1>
+        <p>Configure and manage M-Pesa settings for your clients. Secure. Fast. Encrypted.</p>
+      </div>
+    </div>
+
+    <div class="unlock-bar">
+      <svg class="i shield" style="stroke-width:2"><use href="#i-shield"/></svg>
+      <label for="adminSecret">Super-Admin Secret:</label>
+      <div class="secret-wrap">
+        <input type="password" id="adminSecret" name="vault_secret" placeholder="Enter Super-Admin Secret" autocomplete="new-password" />
+        <button type="button" aria-label="Show or hide secret" onclick="toggleInput('adminSecret')"><svg class="i"><use href="#i-eye"/></svg></button>
+      </div>
+      <button class="btn btn-green" onclick="unlockAndLoad()"><svg class="i"><use href="#i-lock"/></svg> Unlock Vault</button>
+    </div>
+
+    <!-- KPI strip -->
+    <div class="kpi-grid">
+      <div class="kpi pending"><svg class="i ic" style="stroke-width:2.4"><use href="#i-clock"/></svg>
+        <div><div class="kpi-label">Pending M-Pesa Setup</div><div class="kpi-val" id="kpiPending">0</div><div class="kpi-sub">Paid KES 4,000 · Need Daraja keys</div></div></div>
+      <div class="kpi active"><svg class="i ic" style="stroke-width:2.4"><use href="#i-check"/></svg>
+        <div><div class="kpi-label">Active Stores</div><div class="kpi-val" id="kpiActive">0</div><div class="kpi-sub">Live &amp; Encrypted</div></div></div>
+      <div class="kpi expired"><svg class="i ic" style="stroke-width:2"><use href="#i-lock"/></svg>
+        <div><div class="kpi-label">Expired / Locked Stores</div><div class="kpi-val" id="kpiExpired">0</div><div class="kpi-sub">Renew Required</div></div></div>
+      <div class="kpi mrr"><svg class="i ic" style="stroke-width:2"><use href="#i-bars"/></svg>
+        <div><div class="kpi-label">Monthly Recurring Revenue</div><div class="kpi-val" id="kpiMrr">KSh 0</div><div class="kpi-sub" id="kpiMrrSub">0 × KSh 300</div></div></div>
+    </div>
+
+    <div class="workspace">
+      <!-- Client queue -->
+      <section class="card">
+        <div class="card-head"><div class="t"><svg class="i"><use href="#i-users"/></svg><span id="queueTitle">Client Queue (0 Clients)</span></div></div>
+        <div class="card-body">
+          <div class="tabs" id="tabs">
+            <button class="tab active" data-filter="all">All Clients (0)</button>
+            <button class="tab" data-filter="pending_setup"><span class="dot" style="background:#f59e0b">!</span> Pending Setup (0)</button>
+            <button class="tab" data-filter="active"><span class="dot" style="background:#16a34a"><svg class="i" style="stroke-width:3.5;width:11px;height:11px"><use href="#i-check"/></svg></span> Active (0)</button>
+            <button class="tab" data-filter="expired"><span class="dot" style="background:#dc2626">✕</span> Expired (0)</button>
+          </div>
+
+          <div class="searchbar">
+            <label class="field"><svg class="i" style="font-size:20px"><use href="#i-search"/></svg>
+              <input type="search" id="searchInput" name="client_search" autocomplete="off" placeholder="Search by Store Name, Slug (e.g. /jane), Username or Till Number..." /></label>
+            <button class="btn btn-green" id="searchBtn"><svg class="i"><use href="#i-search"/></svg> Search</button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Store &amp; Owner</th><th>Till / Store Info</th><th>M-Pesa Status</th><th>Subscription Expiry</th><th>Action</th></tr></thead>
+              <tbody id="tenantTableBody">
+                <tr class="empty-row"><td colspan="6">Enter your <strong>Super-Admin Secret</strong> above and click <strong>Unlock Vault</strong> to load stores.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="table-foot">
+            <span id="showing">Showing 0 of 0 clients</span>
+            <div class="pager" id="pager"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vault panel -->
+      <section class="card">
+        <div class="card-head">
+          <div class="t"><svg class="i"><use href="#i-gear"/></svg> Configure M-Pesa Keys</div>
+          <button type="button" aria-label="Close panel" onclick="closePanel()"><svg class="i"><use href="#i-x"/></svg></button>
+        </div>
+        <div class="card-body">
+          <div id="vaultEmpty" class="vault-empty">Select a store on the left to encrypt &amp; activate its Daraja credentials.</div>
+
+          <div id="vaultForm" style="display:none;">
+            <div class="cfg-banner">
+              <svg class="i u"><use href="#i-user"/></svg>
+              <div><strong id="cfgTitle"></strong><span id="cfgSub"></span></div>
+            </div>
+
+            <div class="vf"><label for="vaultTill">Buy Goods Till Number</label>
+              <div class="row"><input type="text" id="vaultTill" inputmode="numeric" placeholder="e.g. 849201" />
+                <button type="button" class="icon-btn" aria-label="Copy till" onclick="copyField('vaultTill')"><svg class="i"><use href="#i-copy"/></svg></button></div></div>
+
+            <div class="vf"><label for="vaultHo">Store / Head Office Number</label>
+              <div class="row"><input type="text" id="vaultHo" inputmode="numeric" placeholder="e.g. 849200" />
+                <button type="button" class="icon-btn" aria-label="Copy head office number" onclick="copyField('vaultHo')"><svg class="i"><use href="#i-copy"/></svg></button></div></div>
+
+            <div class="vf"><label for="vaultKey">Consumer Key</label>
+              <div class="row"><input type="password" id="vaultKey" autocomplete="off" />
+                <button type="button" class="icon-btn" aria-label="Show or hide" onclick="toggleInput('vaultKey')"><svg class="i"><use href="#i-eye"/></svg></button></div></div>
+
+            <div class="vf"><label for="vaultSecret">Consumer Secret</label>
+              <div class="row"><input type="password" id="vaultSecret" autocomplete="off" />
+                <button type="button" class="icon-btn" aria-label="Show or hide" onclick="toggleInput('vaultSecret')"><svg class="i"><use href="#i-eye"/></svg></button></div></div>
+
+            <div class="vf"><label for="vaultPasskey">Passkey</label>
+              <div class="row"><input type="password" id="vaultPasskey" autocomplete="off" />
+                <button type="button" class="icon-btn" aria-label="Show or hide" onclick="toggleInput('vaultPasskey')"><svg class="i"><use href="#i-eye"/></svg></button></div></div>
+
+            <div class="stk">
+              <div class="lbl"><svg class="i"><use href="#i-clock" style="display:none"/><use href="#i-send"/></svg> Test KES 1 STK Push</div>
+              <div class="row">
+                <input type="tel" id="stkPhone" placeholder="e.g. 0712345678" />
+                <button type="button" class="btn btn-blue" id="stkBtn" onclick="testStk()"><svg class="i"><use href="#i-send"/></svg> Test STK Push</button>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-dark btn-wide" id="saveBtn" onclick="saveVault()"><svg class="i"><use href="#i-lock"/></svg> Encrypt (AES-256) &amp; Activate Store</button>
+
+            <div class="vault-actions">
+              <button type="button" class="btn btn-outline-green" onclick="extend30()"><svg class="i"><use href="#i-plus"/></svg> 30 Days Subscription</button>
+              <button type="button" class="btn btn-outline-red" onclick="suspendStore()"><svg class="i"><use href="#i-pause"/></svg> Suspend Store</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    /* ====================================================================
+       CONFIG: point API at your real backend.
+       DEMO = true loads sample clients and fakes the network calls so you
+       can see the page working. Set DEMO = false in production.
+       The secret is sent as the x-admin-secret header; adapt to your auth.
+       ==================================================================== */
+    const DEMO = false;
+    const API = {
+      tenants: "/api/admin/tenants",          // GET  -> [{id,name,slug,owner,phone,till,head_office,operator,status,expires_at}]
+      save:    "/api/admin/tenants/:id/keys", // POST { till, head_office, consumer_key, consumer_secret, passkey }
+      extend:  "/api/admin/tenants/:id/extend", // POST { days: 30 }
+      suspend: "/api/admin/tenants/:id/suspend",// POST
+      stk:     "/api/admin/stk-test",         // POST { tenant_id, phone }
+    };
+    const MONTHLY_FEE = 300, PAGE_SIZE = 5;
+
+    const $ = (id) => document.getElementById(id);
+    const state = { tenants: [], filter: "all", query: "", page: 1, selected: null, secret: "" };
+
+    /* ---------- demo data ---------- */
+    function dayOffset(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
+    function demoTenants() {
+      const rows = [
+        ["Mwalimu Jane Hub", "jane", "pending_setup", null, "849201", "849200", "OP12345"],
+        ["Bright Exams Center", "bright", "active", 30, "850001", "850000", "OP67890"],
+        ["Kisumu Exams Hub", "kisumu", "active", 36, "850123", "850100", "OP13579"],
+        ["Nairobi Test Center", "nairobi", "expired", -29, "851000", "850900", "OP24680"],
+        ["Mombasa Exams Hub", "mombasa", "active", 33, "851111", "851000", "OP11223"],
+        ["Nakuru Papers", "nakuru", "active", 12, "852001", "852000", "OP10001"],
+        ["Eldoret Scholars", "eldoret", "pending_setup", null, "852100", "852090", "OP10002"],
+        ["Thika Revision Hub", "thika", "active", 21, "852200", "852190", "OP10003"],
+        ["Kakamega Papers", "kakamega", "active", 8, "852300", "852290", "OP10004"],
+        ["Machakos Exams", "machakos", "pending_setup", null, "852400", "852390", "OP10005"],
+        ["Nyeri Study Hub", "nyeri", "active", 45, "852500", "852490", "OP10006"],
+        ["Kisii Exams Point", "kisii", "active", 27, "852600", "852590", "OP10007"],
+        ["Embu Papers Hub", "embu", "expired", -4, "852700", "852690", "OP10008"],
+        ["Meru Exam Centre", "meru", "active", 19, "852800", "852790", "OP10009"],
+        ["Kitale Revision", "kitale", "active", 5, "852900", "852890", "OP10010"],
+        ["Garissa Papers", "garissa", "active", 40, "853000", "852990", "OP10011"],
+      ];
+      return rows.map((r, i) => ({
+        id: "t" + (i + 1), name: r[0], slug: r[1], owner: r[1], phone: "2547" + String(10000000 + i * 137).slice(0, 8),
+        status: r[2], expires_at: r[3] === null ? null : dayOffset(r[3]), till: r[4], head_office: r[5], operator: r[6],
+      }));
+    }
+
+    /* ---------- helpers ---------- */
+    function esc(s) { return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+    function fmtDate(iso) { return new Date(iso + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
+    function daysLeft(iso) { const t = new Date(); t.setHours(0, 0, 0, 0); return Math.round((new Date(iso + "T00:00:00") - t) / 86400000); }
+    function icon(id, extra = "") { return `<svg class="i" ${extra}><use href="#${id}"/></svg>`; }
+
+    let toastTimer;
+    function toast(msg, ok = true) {
+      const t = $("toast");
+      t.style.background = ok ? "#15803d" : "#dc2626";
+      t.innerHTML = `<span class="tick">${icon(ok ? "i-check" : "i-x", 'style="stroke-width:3"')}</span><span>${esc(msg)}</span><button class="x" aria-label="Dismiss" onclick="this.parentNode.classList.remove('show')">${icon("i-x")}</button>`;
+      t.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove("show"), 3500);
+    }
+
+    function toggleInput(id) { const el = $(id); el.type = el.type === "password" ? "text" : "password"; }
+    function copyText(v) { navigator.clipboard.writeText(v).then(() => toast("Copied")); }
+    function copyField(id) { copyText($(id).value); }
+
+    async function api(url, opts = {}) {
+      const res = await fetch(url, { ...opts, headers: { "Content-Type": "application/json", "x-admin-secret": state.secret, ...(opts.headers || {}) } });
+      if (!res.ok) throw new Error(String(res.status));
+      return res.json();
+    }
+    const url = (tpl, id) => tpl.replace(":id", encodeURIComponent(id));
+
+    /* ---------- load + KPIs ---------- */
+    async function unlockAndLoad() {
+      const secret = $("adminSecret").value;
+      if (!secret) return toast("Enter the Super-Admin Secret", false);
+      state.secret = secret;
+      try {
+        state.tenants = DEMO ? demoTenants() : await api(API.tenants);
+        state.page = 1;
+        renderAll();
+        toast("Vault unlocked");
+      } catch {
+        toast("Could not unlock. Check the secret.", false);
+      }
+    }
+
+    function counts() {
+      const c = { all: state.tenants.length, pending_setup: 0, active: 0, expired: 0 };
+      state.tenants.forEach((t) => { if (c[t.status] !== undefined) c[t.status]++; });
+      return c;
+    }
+
+    function renderKpis() {
+      const c = counts();
+      $("kpiPending").textContent = c.pending_setup;
+      $("kpiActive").textContent = c.active;
+      $("kpiExpired").textContent = c.expired;
+      $("kpiMrr").textContent = "KSh " + (c.active * MONTHLY_FEE).toLocaleString();
+      $("kpiMrrSub").textContent = `${c.active} × KSh ${MONTHLY_FEE}`;
+      $("queueTitle").textContent = `Client Queue (${c.all} Clients)`;
+      const labels = { all: "All Clients", pending_setup: "Pending Setup", active: "Active", expired: "Expired" };
+      document.querySelectorAll("#tabs .tab").forEach((b) => {
+        const f = b.dataset.filter;
+        b.classList.toggle("active", f === state.filter);
+        const dot = b.querySelector(".dot");
+        b.innerHTML = (dot ? dot.outerHTML + " " : "") + `${labels[f]} (${c[f]})`;
+      });
+    }
+
+    /* ---------- table ---------- */
+    function visibleTenants() {
+      const q = state.query.trim().toLowerCase();
+      const order = { pending_setup: 0, expired: 1, active: 2, not_submitted: 3 };
+      return state.tenants
+        .filter((t) => state.filter === "all" || t.status === state.filter)
+        .filter((t) => !q || [t.name, t.slug, "/" + t.slug, t.owner, t.till, t.head_office, t.operator].some((v) => String(v ?? "").toLowerCase().includes(q)))
+        .sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
+    }
+
+    function statusBadge(s) {
+      if (s === "pending_setup") return `<span class="badge badge-pending">${icon("i-clock")} Pending Setup</span>`;
+      if (s === "active")        return `<span class="badge badge-active">${icon("i-check", 'style="stroke-width:3"')} Live &amp; Encrypted</span>`;
+      if (s === "expired")       return `<span class="badge badge-expired">${icon("i-x", 'style="stroke-width:3"')} Expired</span>`;
+      return `<span class="badge badge-unpaid">Free / Unpaid</span>`;
+    }
+
+    function actionBtn(t) {
+      if (t.status === "pending_setup") return `<button class="btn btn-blue btn-sm" data-act="select" data-id="${esc(t.id)}">${icon("i-gear")} Configure Keys</button>`;
+      if (t.status === "expired")       return `<button class="btn btn-amber btn-sm" data-act="renew" data-id="${esc(t.id)}">${icon("i-refresh")} Renew</button>`;
+      return `<button class="btn btn-green btn-sm" data-act="select" data-id="${esc(t.id)}">${icon("i-pencil")} Manage</button>`;
+    }
+
+    function expiryCell(t) {
+      if (!t.expires_at) return `<div class="exp-date">—</div><div class="exp-days na">(Setup Required)</div>`;
+      const d = daysLeft(t.expires_at);
+      return `<div class="exp-date" style="${d < 0 ? "color:var(--red)" : ""}">${fmtDate(t.expires_at)}</div><div class="exp-days ${d < 0 ? "bad" : "ok"}">(${d}d)</div>`;
+    }
+
+    function renderTable() {
+      const list = visibleTenants();
+      const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+      state.page = Math.min(state.page, pages);
+      const start = (state.page - 1) * PAGE_SIZE;
+      const slice = list.slice(start, start + PAGE_SIZE);
+      const body = $("tenantTableBody");
+
+      if (!state.tenants.length) {
+        body.innerHTML = `<tr class="empty-row"><td colspan="6">Enter your <strong>Super-Admin Secret</strong> above and click <strong>Unlock Vault</strong> to load stores.</td></tr>`;
+      } else if (!slice.length) {
+        body.innerHTML = `<tr class="empty-row"><td colspan="6">No clients match your search.</td></tr>`;
+      } else {
+        body.innerHTML = slice.map((t, i) => `
+          <tr class="${state.selected === t.id ? "selected-row" : ""}">
+            <td><strong>${start + i + 1}</strong></td>
+            <td>
+              <a class="store-name" href="#" data-act="select" data-id="${esc(t.id)}">${esc(t.name)}</a>
+              <div class="store-slug">multiexamsportal.co.ke/${esc(t.slug)}</div>
+              <a class="wa" href="https://wa.me/${esc(String(t.phone || "").replace(/\D/g, ""))}" target="_blank" rel="noopener">${icon("i-wa", 'class="i fill"')} Chat on WhatsApp</a>
+            </td>
+            <td>
+              <div class="till-cell">
+                <div>Till: ${esc(t.till || "—")}<br>HO: ${esc(t.head_office || "—")}<br>Op: ${esc(t.operator || "—")}</div>
+                <button class="icon-btn" aria-label="Copy till info" data-act="copy" data-id="${esc(t.id)}">${icon("i-copy")}</button>
+              </div>
+            </td>
+            <td>${statusBadge(t.status)}</td>
+            <td>${expiryCell(t)}</td>
+            <td>${actionBtn(t)}</td>
+          </tr>`).join("");
+      }
+
+      $("showing").textContent = list.length
+        ? `Showing ${start + 1}–${start + slice.length} of ${list.length} clients`
+        : "Showing 0 of 0 clients";
+
+      const btn = (label, p, dis, on) => `<button class="${on ? "on" : ""}" data-page="${p}" ${dis ? "disabled" : ""}>${label}</button>`;
+      let nums = "";
+      for (let p = 1; p <= pages; p++) nums += btn(p, p, false, p === state.page);
+      $("pager").innerHTML = btn("«", 1, state.page === 1) + btn("‹", state.page - 1, state.page === 1) + nums +
+                             btn("›", state.page + 1, state.page === pages) + btn("»", pages, state.page === pages);
+    }
+
+    function renderAll() { renderKpis(); renderTable(); }
+
+    /* ---------- events ---------- */
+    $("tabs").addEventListener("click", (e) => {
+      const b = e.target.closest(".tab"); if (!b) return;
+      state.filter = b.dataset.filter; state.page = 1; renderAll();
+    });
+    $("searchInput").addEventListener("input", (e) => { state.query = e.target.value; state.page = 1; renderTable(); });
+    $("searchBtn").addEventListener("click", () => { state.query = $("searchInput").value; state.page = 1; renderTable(); });
+    $("pager").addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-page]"); if (!b || b.disabled) return;
+      state.page = Number(b.dataset.page); renderTable();
+    });
+    $("tenantTableBody").addEventListener("click", (e) => {
+      const el = e.target.closest("[data-act]"); if (!el) return;
+      e.preventDefault();
+      const t = state.tenants.find((x) => x.id === el.dataset.id); if (!t) return;
+      if (el.dataset.act === "select") selectTenant(t.id);
+      if (el.dataset.act === "copy") copyText(`Till: ${t.till}\nHO: ${t.head_office}\nOp: ${t.operator}`);
+      if (el.dataset.act === "renew") { selectTenant(t.id); extend30(); }
+    });
+    $("adminSecret").addEventListener("keydown", (e) => { if (e.key === "Enter") unlockAndLoad(); });
+
+    /* ---------- vault panel ---------- */
+    function selectTenant(id) {
+      const t = state.tenants.find((x) => x.id === id); if (!t) return;
+      state.selected = id;
+      $("vaultEmpty").style.display = "none";
+      $("vaultForm").style.display = "block";
+      $("cfgTitle").textContent = `Configuring: ${t.name} (/${t.slug})`;
+      $("cfgSub").textContent = `Store No: ${t.till || "—"}  |  Till No: ${t.head_office || "—"}`;
+      $("vaultTill").value = t.till || "";
+      $("vaultHo").value = t.head_office || "";
+      ["vaultKey", "vaultSecret", "vaultPasskey"].forEach((f) => { $(f).value = ""; $(f).type = "password"; });
+      $("stkPhone").value = "";
+      renderTable();
+      $("vaultForm").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function closePanel() {
+      state.selected = null;
+      $("vaultForm").style.display = "none";
+      $("vaultEmpty").style.display = "block";
+      renderTable();
+    }
+
+    const current = () => state.tenants.find((t) => t.id === state.selected);
+
+    async function saveVault() {
+      const t = current(); if (!t) return;
+      const body = {
+        till: $("vaultTill").value.trim(), head_office: $("vaultHo").value.trim(),
+        consumer_key: $("vaultKey").value, consumer_secret: $("vaultSecret").value, passkey: $("vaultPasskey").value,
+      };
+      if (!body.till || !body.consumer_key || !body.consumer_secret || !body.passkey) {
+        return toast("Till number, Consumer Key, Consumer Secret and Passkey are required", false);
+      }
+      const btn = $("saveBtn"); btn.disabled = true;
+      try {
+        if (!DEMO) await api(url(API.save, t.id), { method: "POST", body: JSON.stringify(body) });
+        t.till = body.till; t.head_office = body.head_office; t.status = "active";
+        if (!t.expires_at || daysLeft(t.expires_at) < 0) t.expires_at = dayOffset(30);
+        ["vaultKey", "vaultSecret", "vaultPasskey"].forEach((f) => ($(f).value = ""));   // never keep secrets in the DOM
+        renderAll(); selectTenant(t.id);
+        toast("Credentials encrypted & saved!");
+      } catch {
+        toast("Could not save credentials", false);
+      } finally { btn.disabled = false; }
+    }
+
+    async function testStk() {
+      const t = current(); if (!t) return;
+      const phone = $("stkPhone").value.trim().replace(/\s+/g, "");
+      if (!/^(?:0|\+?254)[71]\d{8}$/.test(phone)) return toast("Enter a valid Safaricom number, e.g. 0712345678", false);
+      const btn = $("stkBtn"); btn.disabled = true;
+      try {
+        if (!DEMO) await api(API.stk, { method: "POST", body: JSON.stringify({ tenant_id: t.id, phone }) });
+        toast("STK push sent for KES 1");
+      } catch { toast("STK push failed", false); }
+      finally { btn.disabled = false; }
+    }
+
+    async function extend30() {
+      const t = current(); if (!t) return;
+      if (t.status === "pending_setup") return toast("Activate the store before adding subscription days", false);
+      try {
+        if (!DEMO) await api(url(API.extend, t.id), { method: "POST", body: JSON.stringify({ days: 30 }) });
+        const base = t.expires_at && daysLeft(t.expires_at) > 0 ? new Date(t.expires_at + "T00:00:00") : new Date();
+        base.setDate(base.getDate() + 30);
+        t.expires_at = base.toISOString().slice(0, 10);
+        t.status = "active";
+        renderAll();
+        toast("Added 30 days to " + t.name);
+      } catch { toast("Could not extend subscription", false); }
+    }
+
+    async function suspendStore() {
+      const t = current(); if (!t) return;
+      if (!confirm(`Suspend ${t.name}? Checkout will be locked until it is renewed.`)) return;
+      try {
+        if (!DEMO) await api(url(API.suspend, t.id), { method: "POST" });
+        t.status = "expired";
+        renderAll();
+        toast(t.name + " suspended");
+      } catch { toast("Could not suspend the store", false); }
+    }
+  </script>
+</body>
+</html>
