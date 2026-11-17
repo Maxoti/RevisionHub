@@ -23,6 +23,10 @@
   .btn:hover:not(:disabled) { filter: brightness(1.06); }
   .btn:disabled { opacity: .55; cursor: not-allowed; }
   .btn svg { flex-shrink: 0; }
+  .pw { position: relative; margin-top: .3rem; }
+  .pw input { margin-top: 0; padding-right: 2.75rem; }
+  .pw-btn { position: absolute; top: 0; bottom: 0; right: .25rem; width: 2.5rem; display: flex; align-items: center; justify-content: center; border: 0; background: none; color: #666; cursor: pointer; border-radius: 6px; }
+  .pw-btn:hover { color: #0a7d2c; }
   .btn-outline { background: #fff; color: #086b2a; box-shadow: inset 0 0 0 2px #0a8f45; }
   .btn-outline:hover { background: #f1faf4; }
   .btn-red { background: #fbe9e9; color: #a4282c; border-radius: 6px; padding: .35rem .8rem; }
@@ -106,7 +110,16 @@
   <h2>Upload Exam Paper</h2>
   <div class="grid">
     <div><label for="adminUser">Admin username</label><input id="adminUser" autocomplete="username" /></div>
-    <div><label for="adminPass">Admin password</label><input id="adminPass" type="password" autocomplete="current-password" /></div>
+    <div>
+      <label for="adminPass">Admin password</label>
+      <div class="pw">
+        <input id="adminPass" type="password" autocomplete="current-password" />
+        <button id="pwToggle" class="pw-btn" type="button" aria-label="Show password" aria-pressed="false">
+          <svg id="eyeOn" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg id="eyeOff" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>
+        </button>
+      </div>
+    </div>
 
     <div>
       <label for="curriculum">Curriculum</label>
@@ -389,6 +402,14 @@ $("title").addEventListener("input", () => { $("title").dataset.manual = $("titl
 $("upload-btn").addEventListener("click", upload);
 $("refreshBtn").addEventListener("click", loadPapers);
 $("renewBtn").addEventListener("click", renew);
+$("pwToggle").addEventListener("click", () => {
+  const show = $("adminPass").type === "password";
+  $("adminPass").type = show ? "text" : "password";
+  $("pwToggle").setAttribute("aria-pressed", String(show));
+  $("pwToggle").setAttribute("aria-label", show ? "Hide password" : "Show password");
+  $("eyeOn").hidden = show;
+  $("eyeOff").hidden = !show;
+});
 $("copyBtn").addEventListener("click", () => navigator.clipboard.writeText($("storeUrl").textContent).then(() => toast("Link copied")));
 $("papers").addEventListener("click", e => {
   const del = e.target.closest("[data-del]");
