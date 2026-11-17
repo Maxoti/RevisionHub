@@ -1,5 +1,4 @@
 import 'dotenv/config';
-import keepAlive from './jobs/keepAlive';
 
 const PORT = process.env.PORT || 3000;
 const isSaas = process.env.TENANT_MODE === 'multi';
@@ -13,9 +12,11 @@ console.log(`[server] TENANT_MODE=${process.env.TENANT_MODE} -> ${isSaas ? 'app.
 
 // ...keep your MPESA env debug logs here...
 
-
 app.listen(PORT, () => {
   console.log(`revisionhub running on port ${PORT} (${isSaas ? 'saas' : 'single-tenant'})`);
 });
 
-keepAlive.start();
+// keepAlive pings the single-tenant DB (config/db), so skip it for the SaaS app
+if (!isSaas) {
+  require('./jobs/keepAlive').default.start();
+}
