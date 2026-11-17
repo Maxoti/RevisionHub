@@ -10,6 +10,7 @@ const saasRoutes_1 = require("./routes/saasRoutes");
 const authRoutes_1 = require("./routes/authRoutes");
 const db_saas_1 = __importDefault(require("./config/db.saas"));
 const app = (0, express_1.default)();
+app.get('/api/__version', (_req, res) => res.json({ app: 'saas', build: '2026-11-17-a' }));
 app.use((0, cors_1.default)({
     origin: ['https://edusynchub.co.ke', 'https://www.edusynchub.co.ke'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

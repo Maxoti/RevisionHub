@@ -4,19 +4,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
-const app_1 = __importDefault(require("./app"));
 const keepAlive_1 = __importDefault(require("./jobs/keepAlive"));
 const PORT = process.env.PORT || 3000;
-// Debug env vars on startup
-console.log('=== MPESA ENV CHECK ===');
-console.log('MPESA_ENV:', process.env.MPESA_ENV);
-console.log('MPESA_SHORTCODE:', process.env.MPESA_SHORTCODE);
-console.log('MPESA_CALLBACK_URL:', process.env.MPESA_CALLBACK_URL);
-console.log('MPESA_CONSUMER_KEY:', process.env.MPESA_CONSUMER_KEY?.slice(0, 6) + '***');
-console.log('MPESA_CONSUMER_SECRET:', process.env.MPESA_CONSUMER_SECRET?.slice(0, 4) + '***');
-console.log('MPESA_PASSKEY:', process.env.MPESA_PASSKEY ? 'SET ✓' : 'NOT SET ✗');
-console.log('=======================');
-app_1.default.listen(PORT, () => {
-    console.log(`revisionhub running on port ${PORT}`);
+const isSaas = process.env.TENANT_MODE === 'multi';
+// require() inside the branch so only one app and one DB pool load
+const app = isSaas
+    ? require('./app.saas').default
+    : require('./app').default;
+console.log(`[server] TENANT_MODE=${process.env.TENANT_MODE} -> ${isSaas ? 'app.saas' : 'app'}`);
+// ...keep your MPESA env debug logs here...
+app.listen(PORT, () => {
+    console.log(`revisionhub running on port ${PORT} (${isSaas ? 'saas' : 'single-tenant'})`);
 });
 keepAlive_1.default.start();
