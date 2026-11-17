@@ -125,6 +125,49 @@ function createSaasRouter(pool) {
             res.status(500).json({ error: "Failed to load seller dashboard." });
         }
     });
+    router.get("/store/:slug/papers", async (req, res) => {
+        try {
+            const slug = str(req.params.slug).toLowerCase().slice(0, 60);
+            const tr = await pool.query(`SELECT id, store_name, slug, setup_fee_paid, mpesa_status, status
+         FROM public.tenants WHERE slug = $1`, [slug]);
+            const t = tr.rows[0];
+            if (!t || t.status === "suspended") {
+                return res.status(404).json({ error: "Store not found." });
+            }
+            const where = ["tenant_id = $1", "active = true"];
+            const args = [t.id];
+            const add = (col, v) => {
+                const s = str(v).trim();
+                if (s) {
+                    args.push(s);
+                    where.push(`${col} = $${args.length}`);
+                }
+            };
+            add("curriculum", req.query.curriculum);
+            add("grade", req.query.grade);
+            add("exam_type", req.query.type);
+            add("term", req.query.term);
+            const y = Number(req.query.year);
+            if (Number.isInteger(y) && y > 1990) {
+                args.push(y);
+                where.push(`year = $${args.length}`);
+            }
+            const papers = await (0, tenantDb_1.withTenant)(pool, t.id, (c) => c.query(`SELECT id, title, subject, curriculum, grade, exam_type, term, year, price, is_bundle
+           FROM public.papers
+          WHERE ${where.join(" AND ")}
+          ORDER BY created_at DESC
+          LIMIT 500`, args));
+            res.json({
+                store: { name: t.store_name, slug: t.slug },
+                purchasable: t.setup_fee_paid === true && t.mpesa_status === "active",
+                papers: papers.rows,
+            });
+        }
+        catch (err) {
+            console.error("[store/papers]", err.message);
+            res.status(500).json({ error: "Could not load papers." });
+        }
+    });
     router.post("/tenants/upload-url", ...seller, (0, tenantAuth_1.requireRole)("owner", "admin"), async (req, res) => {
         try {
             const t = tenantOf(res);
