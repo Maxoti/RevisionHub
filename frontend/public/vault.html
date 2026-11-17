@@ -149,17 +149,19 @@
     .vf input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 15px; background: #fff; }
     .vf input:focus, .stk input:focus, .searchbar .field:focus-within { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,163,74,.14); }
     .vf .icon-btn { width: 42px; height: 40px; background: #f1f5f9; color: var(--slate-700); }
+    .vf .hint { font-size: 13px; color: var(--slate-500); margin: 4px 0 0; }
     .stk { background: #dbeafe; border-radius: 8px; padding: 8px 10px; margin: 12px 0; }
     .stk .lbl { font-weight: 800; color: #1e3a8a; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
     .stk .row { display: flex; gap: 8px; }
     .stk input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid #93c5fd; border-radius: 6px; font-size: 15px; background: #fff; }
+    .stk .note { font-size: 13px; color: #1e3a8a; margin: 6px 0 0; }
     .btn-wide { width: 100%; height: 44px; font-size: 16px; }
     .vault-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
 
     /* ---------- Toast ---------- */
-    .toast { position: fixed; top: 74px; right: 22px; min-width: 300px; padding: 14px 16px; border-radius: 10px; color: #fff; font-weight: 800; font-size: 16px; z-index: 999; display: none; align-items: center; gap: 12px; box-shadow: 0 10px 24px rgba(0,0,0,.18); }
+    .toast { position: fixed; top: 74px; right: 22px; min-width: 300px; max-width: min(520px, calc(100vw - 44px)); padding: 14px 16px; border-radius: 10px; color: #fff; font-weight: 800; font-size: 16px; z-index: 999; display: none; align-items: center; gap: 12px; box-shadow: 0 10px 24px rgba(0,0,0,.18); }
     .toast.show { display: flex; }
-    .toast .tick { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff; display: grid; place-items: center; font-size: 18px; }
+    .toast .tick { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff; display: grid; place-items: center; font-size: 18px; flex-shrink: 0; }
     .toast .x { margin-left: auto; background: none; border: 0; color: #fff; cursor: pointer; font-size: 18px; display: grid; place-items: center; }
   </style>
 </head>
@@ -299,21 +301,23 @@
 
             <div class="vf"><label for="vaultPasskey">Passkey</label>
               <div class="row"><input type="password" id="vaultPasskey" autocomplete="off" />
-                <button type="button" class="icon-btn" aria-label="Show or hide" onclick="toggleInput('vaultPasskey')"><svg class="i"><use href="#i-eye"/></svg></button></div></div>
+                <button type="button" class="icon-btn" aria-label="Show or hide" onclick="toggleInput('vaultPasskey')"><svg class="i"><use href="#i-eye"/></svg></button></div>
+              <p class="hint" id="keysHint" style="display:none">Keys are already saved for this store. Leave these three fields empty to keep them.</p></div>
 
             <div class="stk">
-              <div class="lbl"><svg class="i"><use href="#i-clock" style="display:none"/><use href="#i-send"/></svg> Test KES 1 STK Push</div>
+              <div class="lbl"><svg class="i"><use href="#i-send"/></svg> Test KES 1 STK Push</div>
               <div class="row">
                 <input type="tel" id="stkPhone" placeholder="e.g. 0712345678" />
                 <button type="button" class="btn btn-blue" id="stkBtn" onclick="testStk()"><svg class="i"><use href="#i-send"/></svg> Test STK Push</button>
               </div>
+              <p class="note">Save the keys first. The test uses the saved till and keys, and sends a real KES 1 prompt.</p>
             </div>
 
             <button type="button" class="btn btn-dark btn-wide" id="saveBtn" onclick="saveVault()"><svg class="i"><use href="#i-lock"/></svg> Encrypt (AES-256) &amp; Activate Store</button>
 
             <div class="vault-actions">
               <button type="button" class="btn btn-outline-green" onclick="extend30()"><svg class="i"><use href="#i-plus"/></svg> 30 Days Subscription</button>
-              <button type="button" class="btn btn-outline-red" onclick="suspendStore()"><svg class="i"><use href="#i-pause"/></svg> Suspend Store</button>
+              <button type="button" class="btn btn-outline-red" id="suspendBtn" onclick="suspendStore()"><svg class="i"><use href="#i-pause"/></svg> Suspend Store</button>
             </div>
           </div>
         </div>
@@ -323,50 +327,23 @@
 
   <script>
     /* ====================================================================
-       CONFIG: point API at your real backend.
-       DEMO = true loads sample clients and fakes the network calls so you
-       can see the page working. Set DEMO = false in production.
-       The secret is sent as the x-admin-secret header; adapt to your auth.
+       CONFIG
+       The API lives on the "api." subdomain of whatever site this page is
+       served from (edusynchub.co.ke -> api.edusynchub.co.ke).
+       The secret is sent as the x-admin-secret header.
        ==================================================================== */
-    const DEMO = false;
+    const API_BASE = `https://api.${location.hostname.replace(/^(www|admin)\./, "")}`;
     const API = {
-      tenants: "/api/admin/tenants",          // GET  -> [{id,name,slug,owner,phone,till,head_office,operator,status,expires_at}]
-      save:    "/api/admin/tenants/:id/keys", // POST { till, head_office, consumer_key, consumer_secret, passkey }
-      extend:  "/api/admin/tenants/:id/extend", // POST { days: 30 }
-      suspend: "/api/admin/tenants/:id/suspend",// POST
-      stk:     "/api/admin/stk-test",         // POST { tenant_id, phone }
+      tenants: `${API_BASE}/api/vault/tenants`,
+      save:    `${API_BASE}/api/vault/activate/:id`,
+      extend:  `${API_BASE}/api/vault/extend/:id`,
+      suspend: `${API_BASE}/api/vault/suspend/:id`,
+      stk:     `${API_BASE}/api/vault/test-stk/:id`,
     };
     const MONTHLY_FEE = 300, PAGE_SIZE = 5;
 
     const $ = (id) => document.getElementById(id);
     const state = { tenants: [], filter: "all", query: "", page: 1, selected: null, secret: "" };
-
-    /* ---------- demo data ---------- */
-    function dayOffset(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
-    function demoTenants() {
-      const rows = [
-        ["Mwalimu Jane Hub", "jane", "pending_setup", null, "849201", "849200", "OP12345"],
-        ["Bright Exams Center", "bright", "active", 30, "850001", "850000", "OP67890"],
-        ["Kisumu Exams Hub", "kisumu", "active", 36, "850123", "850100", "OP13579"],
-        ["Nairobi Test Center", "nairobi", "expired", -29, "851000", "850900", "OP24680"],
-        ["Mombasa Exams Hub", "mombasa", "active", 33, "851111", "851000", "OP11223"],
-        ["Nakuru Papers", "nakuru", "active", 12, "852001", "852000", "OP10001"],
-        ["Eldoret Scholars", "eldoret", "pending_setup", null, "852100", "852090", "OP10002"],
-        ["Thika Revision Hub", "thika", "active", 21, "852200", "852190", "OP10003"],
-        ["Kakamega Papers", "kakamega", "active", 8, "852300", "852290", "OP10004"],
-        ["Machakos Exams", "machakos", "pending_setup", null, "852400", "852390", "OP10005"],
-        ["Nyeri Study Hub", "nyeri", "active", 45, "852500", "852490", "OP10006"],
-        ["Kisii Exams Point", "kisii", "active", 27, "852600", "852590", "OP10007"],
-        ["Embu Papers Hub", "embu", "expired", -4, "852700", "852690", "OP10008"],
-        ["Meru Exam Centre", "meru", "active", 19, "852800", "852790", "OP10009"],
-        ["Kitale Revision", "kitale", "active", 5, "852900", "852890", "OP10010"],
-        ["Garissa Papers", "garissa", "active", 40, "853000", "852990", "OP10011"],
-      ];
-      return rows.map((r, i) => ({
-        id: "t" + (i + 1), name: r[0], slug: r[1], owner: r[1], phone: "2547" + String(10000000 + i * 137).slice(0, 8),
-        status: r[2], expires_at: r[3] === null ? null : dayOffset(r[3]), till: r[4], head_office: r[5], operator: r[6],
-      }));
-    }
 
     /* ---------- helpers ---------- */
     function esc(s) { return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
@@ -381,32 +358,75 @@
       t.innerHTML = `<span class="tick">${icon(ok ? "i-check" : "i-x", 'style="stroke-width:3"')}</span><span>${esc(msg)}</span><button class="x" aria-label="Dismiss" onclick="this.parentNode.classList.remove('show')">${icon("i-x")}</button>`;
       t.classList.add("show");
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => t.classList.remove("show"), 3500);
+      toastTimer = setTimeout(() => t.classList.remove("show"), ok ? 3500 : 7000);
     }
 
     function toggleInput(id) { const el = $(id); el.type = el.type === "password" ? "text" : "password"; }
     function copyText(v) { navigator.clipboard.writeText(v).then(() => toast("Copied")); }
     function copyField(id) { copyText($(id).value); }
 
+    // Shows the server's own error message instead of a generic one.
     async function api(url, opts = {}) {
-      const res = await fetch(url, { ...opts, headers: { "Content-Type": "application/json", "x-admin-secret": state.secret, ...(opts.headers || {}) } });
-      if (!res.ok) throw new Error(String(res.status));
-      return res.json();
+      let res;
+      try {
+        res = await fetch(url, { ...opts, headers: { "Content-Type": "application/json", "x-admin-secret": state.secret, ...(opts.headers || {}) } });
+      } catch {
+        throw new Error("Cannot reach the API (network or CORS). Press F12 to see why.");
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 401) throw new Error("Wrong Super-Admin Secret.");
+        throw new Error(data.error || `Request failed (${res.status})`);
+      }
+      return data;
     }
     const url = (tpl, id) => tpl.replace(":id", encodeURIComponent(id));
 
-    /* ---------- load + KPIs ---------- */
+    // Backend row -> the shape this page renders.
+    function mapTenant(t) {
+      const suspended = t.status === "suspended";
+      let status = "pending_setup";
+      if (suspended) status = "expired";
+      else if (t.mpesa_status === "active") {
+        status = t.subscription_ends_at && new Date(t.subscription_ends_at) < new Date() ? "expired" : "active";
+      }
+      return {
+        id: String(t.id),
+        name: t.store_name,
+        slug: t.slug,
+        owner: t.username || "",
+        phone: t.phone_number,
+        whatsapp: t.whatsapp_number || t.phone_number,
+        till: t.till_number,
+        head_office: t.store_number,
+        status,
+        suspended,
+        keysSaved: t.mpesa_status === "active",
+        expires_at: t.subscription_ends_at ? String(t.subscription_ends_at).slice(0, 10) : null,
+      };
+    }
+
+    async function refresh() {
+      const data = await api(API.tenants);
+      state.tenants = data.tenants.map(mapTenant);
+      renderAll();
+      const t = current();
+      if (t) updatePanelHeader(t);
+    }
+
+    /* ---------- unlock + KPIs ---------- */
     async function unlockAndLoad() {
-      const secret = $("adminSecret").value;
+      const secret = $("adminSecret").value.trim();
       if (!secret) return toast("Enter the Super-Admin Secret", false);
       state.secret = secret;
       try {
-        state.tenants = DEMO ? demoTenants() : await api(API.tenants);
+        await refresh();
         state.page = 1;
         renderAll();
         toast("Vault unlocked");
-      } catch {
-        toast("Could not unlock. Check the secret.", false);
+      } catch (err) {
+        state.secret = "";
+        toast(err.message, false);
       }
     }
 
@@ -436,23 +456,23 @@
     /* ---------- table ---------- */
     function visibleTenants() {
       const q = state.query.trim().toLowerCase();
-      const order = { pending_setup: 0, expired: 1, active: 2, not_submitted: 3 };
+      const order = { pending_setup: 0, expired: 1, active: 2 };
       return state.tenants
         .filter((t) => state.filter === "all" || t.status === state.filter)
-        .filter((t) => !q || [t.name, t.slug, "/" + t.slug, t.owner, t.till, t.head_office, t.operator].some((v) => String(v ?? "").toLowerCase().includes(q)))
+        .filter((t) => !q || [t.name, t.slug, "/" + t.slug, t.owner, t.till, t.head_office].some((v) => String(v ?? "").toLowerCase().includes(q)))
         .sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
     }
 
-    function statusBadge(s) {
-      if (s === "pending_setup") return `<span class="badge badge-pending">${icon("i-clock")} Pending Setup</span>`;
-      if (s === "active")        return `<span class="badge badge-active">${icon("i-check", 'style="stroke-width:3"')} Live &amp; Encrypted</span>`;
-      if (s === "expired")       return `<span class="badge badge-expired">${icon("i-x", 'style="stroke-width:3"')} Expired</span>`;
-      return `<span class="badge badge-unpaid">Free / Unpaid</span>`;
+    function statusBadge(t) {
+      if (t.suspended)                 return `<span class="badge badge-expired">${icon("i-pause")} Suspended</span>`;
+      if (t.status === "pending_setup") return `<span class="badge badge-pending">${icon("i-clock")} Pending Setup</span>`;
+      if (t.status === "active")        return `<span class="badge badge-active">${icon("i-check", 'style="stroke-width:3"')} Live &amp; Encrypted</span>`;
+      return `<span class="badge badge-expired">${icon("i-x", 'style="stroke-width:3"')} Expired</span>`;
     }
 
     function actionBtn(t) {
       if (t.status === "pending_setup") return `<button class="btn btn-blue btn-sm" data-act="select" data-id="${esc(t.id)}">${icon("i-gear")} Configure Keys</button>`;
-      if (t.status === "expired")       return `<button class="btn btn-amber btn-sm" data-act="renew" data-id="${esc(t.id)}">${icon("i-refresh")} Renew</button>`;
+      if (t.status === "expired" && !t.suspended) return `<button class="btn btn-amber btn-sm" data-act="renew" data-id="${esc(t.id)}">${icon("i-refresh")} Renew</button>`;
       return `<button class="btn btn-green btn-sm" data-act="select" data-id="${esc(t.id)}">${icon("i-pencil")} Manage</button>`;
     }
 
@@ -480,16 +500,17 @@
             <td><strong>${start + i + 1}</strong></td>
             <td>
               <a class="store-name" href="#" data-act="select" data-id="${esc(t.id)}">${esc(t.name)}</a>
-              <div class="store-slug">multiexamsportal.co.ke/${esc(t.slug)}</div>
-              <a class="wa" href="https://wa.me/${esc(String(t.phone || "").replace(/\D/g, ""))}" target="_blank" rel="noopener">${icon("i-wa", 'class="i fill"')} Chat on WhatsApp</a>
+              <div class="store-slug">${esc(location.host)}/${esc(t.slug)}</div>
+              ${t.owner ? `<div class="store-slug">Owner: ${esc(t.owner)}</div>` : ""}
+              ${t.whatsapp ? `<a class="wa" href="https://wa.me/${esc(String(t.whatsapp).replace(/\D/g, ""))}" target="_blank" rel="noopener">${icon("i-wa", 'class="i fill"')} Chat on WhatsApp</a>` : ""}
             </td>
             <td>
               <div class="till-cell">
-                <div>Till: ${esc(t.till || "—")}<br>HO: ${esc(t.head_office || "—")}<br>Op: ${esc(t.operator || "—")}</div>
+                <div>Till: ${esc(t.till || "—")}<br>Store No: ${esc(t.head_office || "—")}</div>
                 <button class="icon-btn" aria-label="Copy till info" data-act="copy" data-id="${esc(t.id)}">${icon("i-copy")}</button>
               </div>
             </td>
-            <td>${statusBadge(t.status)}</td>
+            <td>${statusBadge(t)}</td>
             <td>${expiryCell(t)}</td>
             <td>${actionBtn(t)}</td>
           </tr>`).join("");
@@ -524,19 +545,27 @@
       e.preventDefault();
       const t = state.tenants.find((x) => x.id === el.dataset.id); if (!t) return;
       if (el.dataset.act === "select") selectTenant(t.id);
-      if (el.dataset.act === "copy") copyText(`Till: ${t.till}\nHO: ${t.head_office}\nOp: ${t.operator}`);
+      if (el.dataset.act === "copy") copyText(`Till: ${t.till || ""}\nStore No: ${t.head_office || ""}`);
       if (el.dataset.act === "renew") { selectTenant(t.id); extend30(); }
     });
     $("adminSecret").addEventListener("keydown", (e) => { if (e.key === "Enter") unlockAndLoad(); });
 
     /* ---------- vault panel ---------- */
+    function updatePanelHeader(t) {
+      $("cfgTitle").textContent = `Configuring: ${t.name} (/${t.slug})`;
+      $("cfgSub").textContent = `Till No: ${t.till || "—"}  |  Store No: ${t.head_office || "—"}`;
+      $("keysHint").style.display = t.keysSaved ? "block" : "none";
+      $("suspendBtn").innerHTML = t.suspended
+        ? `${icon("i-refresh")} Reactivate Store`
+        : `${icon("i-pause")} Suspend Store`;
+    }
+
     function selectTenant(id) {
       const t = state.tenants.find((x) => x.id === id); if (!t) return;
       state.selected = id;
       $("vaultEmpty").style.display = "none";
       $("vaultForm").style.display = "block";
-      $("cfgTitle").textContent = `Configuring: ${t.name} (/${t.slug})`;
-      $("cfgSub").textContent = `Store No: ${t.till || "—"}  |  Till No: ${t.head_office || "—"}`;
+      updatePanelHeader(t);
       $("vaultTill").value = t.till || "";
       $("vaultHo").value = t.head_office || "";
       ["vaultKey", "vaultSecret", "vaultPasskey"].forEach((f) => { $(f).value = ""; $(f).type = "password"; });
@@ -557,23 +586,26 @@
     async function saveVault() {
       const t = current(); if (!t) return;
       const body = {
-        till: $("vaultTill").value.trim(), head_office: $("vaultHo").value.trim(),
-        consumer_key: $("vaultKey").value, consumer_secret: $("vaultSecret").value, passkey: $("vaultPasskey").value,
+        tillNumber: $("vaultTill").value.trim(),
+        storeNumber: $("vaultHo").value.trim(),
+        consumerKey: $("vaultKey").value,
+        consumerSecret: $("vaultSecret").value,
+        passkey: $("vaultPasskey").value,
       };
-      if (!body.till || !body.consumer_key || !body.consumer_secret || !body.passkey) {
-        return toast("Till number, Consumer Key, Consumer Secret and Passkey are required", false);
+      if (!body.tillNumber) return toast("Enter the Buy Goods Till Number", false);
+      // First-time setup needs all three keys. For a store that already has
+      // keys saved, empty fields keep the existing ones.
+      if (!t.keysSaved && (!body.consumerKey || !body.consumerSecret || !body.passkey)) {
+        return toast("Consumer Key, Consumer Secret and Passkey are required", false);
       }
       const btn = $("saveBtn"); btn.disabled = true;
       try {
-        if (!DEMO) await api(url(API.save, t.id), { method: "POST", body: JSON.stringify(body) });
-        t.till = body.till; t.head_office = body.head_office; t.status = "active";
-        if (!t.expires_at || daysLeft(t.expires_at) < 0) t.expires_at = dayOffset(30);
-        ["vaultKey", "vaultSecret", "vaultPasskey"].forEach((f) => ($(f).value = ""));   // never keep secrets in the DOM
-        renderAll(); selectTenant(t.id);
-        toast("Credentials encrypted & saved!");
-      } catch {
-        toast("Could not save credentials", false);
-      } finally { btn.disabled = false; }
+        await api(url(API.save, t.id), { method: "POST", body: JSON.stringify(body) });
+        ["vaultKey", "vaultSecret", "vaultPasskey"].forEach((f) => ($(f).value = ""));  // never keep secrets in the DOM
+        await refresh();
+        toast("Credentials encrypted & store activated");
+      } catch (err) { toast(err.message, false); }
+      finally { btn.disabled = false; }
     }
 
     async function testStk() {
@@ -582,9 +614,9 @@
       if (!/^(?:0|\+?254)[71]\d{8}$/.test(phone)) return toast("Enter a valid Safaricom number, e.g. 0712345678", false);
       const btn = $("stkBtn"); btn.disabled = true;
       try {
-        if (!DEMO) await api(API.stk, { method: "POST", body: JSON.stringify({ tenant_id: t.id, phone }) });
-        toast("STK push sent for KES 1");
-      } catch { toast("STK push failed", false); }
+        await api(url(API.stk, t.id), { method: "POST", body: JSON.stringify({ phone }) });
+        toast("STK push sent for KES 1. Check the phone.");
+      } catch (err) { toast(err.message, false); }
       finally { btn.disabled = false; }
     }
 
@@ -592,25 +624,21 @@
       const t = current(); if (!t) return;
       if (t.status === "pending_setup") return toast("Activate the store before adding subscription days", false);
       try {
-        if (!DEMO) await api(url(API.extend, t.id), { method: "POST", body: JSON.stringify({ days: 30 }) });
-        const base = t.expires_at && daysLeft(t.expires_at) > 0 ? new Date(t.expires_at + "T00:00:00") : new Date();
-        base.setDate(base.getDate() + 30);
-        t.expires_at = base.toISOString().slice(0, 10);
-        t.status = "active";
-        renderAll();
+        await api(url(API.extend, t.id), { method: "POST", body: "{}" });
+        await refresh();
         toast("Added 30 days to " + t.name);
-      } catch { toast("Could not extend subscription", false); }
+      } catch (err) { toast(err.message, false); }
     }
 
     async function suspendStore() {
       const t = current(); if (!t) return;
-      if (!confirm(`Suspend ${t.name}? Checkout will be locked until it is renewed.`)) return;
+      const verb = t.suspended ? "Reactivate" : "Suspend";
+      if (!confirm(`${verb} ${t.name}?${t.suspended ? "" : " Checkout will be locked until it is reactivated."}`)) return;
       try {
-        if (!DEMO) await api(url(API.suspend, t.id), { method: "POST" });
-        t.status = "expired";
-        renderAll();
-        toast(t.name + " suspended");
-      } catch { toast("Could not suspend the store", false); }
+        await api(url(API.suspend, t.id), { method: "POST", body: "{}" });
+        await refresh();
+        toast(`${t.name} ${t.suspended ? "reactivated" : "suspended"}`);
+      } catch (err) { toast(err.message, false); }
     }
   </script>
 </body>
