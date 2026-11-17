@@ -88,6 +88,9 @@
     transition: filter 0.15s, transform 0.05s;
   }
 
+  #upload-btn { display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+  .btn-icon { flex-shrink: 0; }
+
   button:hover:not(:disabled) { filter: brightness(1.05); }
   button:active:not(:disabled) { transform: translateY(1px); }
   button:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -200,8 +203,9 @@
           <label>Curriculum</label>
           <select id="curriculum">
             <option value="">-- Select --</option>
-            <option value="CBE">CBE (PP1–Grade 10)</option>
-            <option value="844">8-4-4 (Form 1–4)</option>
+            <option value="CBE">CBE / CBC (Playgroup–Grade 12)</option>
+            <option value="Cambridge">Cambridge (Year 1–13)</option>
+            <option value="8-4-4">8-4-4 (Form 1–4)</option>
           </select>
         </div>
 
@@ -221,23 +225,18 @@
           <label>Types</label>
           <select id="exam_type">
             <option value="">-- Select --</option>
-            <option value="Opener">Opener</option>
-            <option value="Mid Term">Mid Term</option>
-            <option value="End Term">End Term</option>
-            <option value="Weekly">Weekly</option>
-            <option value="Schemes of Work">Schemes of Work</option>
-            <option value="Lesson Plans">Lesson Plans</option>
-            <option value="Revision Materials">Revision Materials</option>
           </select>
         </div>
         <div>
           <label>Term</label>
           <select id="term">
             <option value="">-- Select --</option>
-            <option value="1">Term 1</option>
-            <option value="2">Term 2</option>
-            <option value="3">Term 3</option>
           </select>
+        </div>
+
+        <div class="full" id="paper-wrap" style="display:none">
+          <label>Paper / Variant <span style="font-weight:400">(optional, Cambridge only)</span></label>
+          <input id="paper" placeholder="e.g. Paper 2 or Paper 4 Variant 1" />
         </div>
 
         <div>
@@ -253,11 +252,11 @@
           <input type="checkbox" id="is_bundle" />
           <label for="is_bundle" style="margin-top:0">This is a Full Set bundle (all subjects)</label>
         </div>
-        <p class="hint full">Full Set bundles should be uploaded as a .zip file containing all subject PDFs.</p>
+        <p class="hint full" id="bundle-hint">Full Set bundles should be uploaded as a .zip file containing all subject PDFs.</p>
 
         <div class="full">
           <label>Title (auto-generated, or override)</label>
-          <input id="title" placeholder="e.g. Grade 5 Mathematics Mid Term 2 2026" />
+          <input id="title" placeholder="e.g. Grade 5 Mathematics Mid-Term Exams Term 2 2026" />
         </div>
 
         <div class="full">
@@ -266,7 +265,7 @@
         </div>
 
         <div class="full">
-          <button id="upload-btn" onclick="upload()">Upload Paper</button>
+          <button id="upload-btn" onclick="upload()"><svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg><span>Upload Paper</span></button>
         </div>
       </div>
     </div>
@@ -303,22 +302,10 @@
       <input id="edit-title" />
 
       <label>Types</label>
-      <select id="edit-exam_type">
-        <option value="Opener">Opener</option>
-        <option value="Mid Term">Mid Term</option>
-        <option value="End Term">End Term</option>
-        <option value="Weekly">Weekly</option>
-        <option value="Schemes of Work">Schemes of Work</option>
-        <option value="Lesson Plans">Lesson Plans</option>
-        <option value="Revision Materials">Revision Materials</option>
-      </select>
+      <select id="edit-exam_type"></select>
 
       <label>Term</label>
-      <select id="edit-term">
-        <option value="1">Term 1</option>
-        <option value="2">Term 2</option>
-        <option value="3">Term 3</option>
-      </select>
+      <select id="edit-term"></select>
 
       <label>Year</label>
       <input id="edit-year" type="number" />
@@ -342,19 +329,144 @@
   <script>
     const API_BASE = `https://${window.location.hostname.replace('admin.', 'api.')}/api`;
 
-    const CBC_GRADES  = ['PP1','PP2','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
-    const FORM_GRADES = ['Form 1','Form 2','Form 3','Form 4'];
+    // ---- Curriculums, grades, types and terms ---------------------------
+    // Keys must match the <option value> of the Curriculum select above.
+    const GRADES_BY_CURRICULUM = {
+      'CBE': [
+        'Playgroup', 'PP1', 'PP2',
+        'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6',
+        'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12',
+      ],
+      'Cambridge': [
+        'Nursery', 'Reception',
+        'Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5', 'Year 6',
+        'Year 7', 'Year 8', 'Year 9', 'Year 10', 'Year 11', 'Year 12', 'Year 13',
+      ],
+      '8-4-4': ['Form 1', 'Form 2', 'Form 3', 'Form 4'],
+    };
 
-    document.getElementById('curriculum').addEventListener('change', function () {
+    // Types shown for every curriculum...
+    const ALL_TYPES = [
+      'Revision Materials',
+      'Topical Exams',
+      'Mid-Term Exams',
+      'End-Term Exams',
+      'Opener Exams',
+      'Mock Exams',
+      'Weekly Exams',
+      'Schemes of Work',
+      'Lesson Plans',
+      'Lesson Notes',
+      'Mnemonic Songs',
+      'Math Formulae',
+    ];
+
+    // ...plus these, which only make sense for one curriculum.
+    const EXTRA_TYPES = {
+      'CBE': [
+        'KPSEA (Grade 6)',
+        'KJSEA (Grade 9)',
+        'KCBE (Grade 12)',
+        'County / Cluster Mocks',
+        'Pre-Mocks',
+        'Holiday Assignments',
+      ],
+      'Cambridge': [
+        'Cambridge Checkpoint (Year 6 / Year 9)',
+        'IGCSE Past Papers',
+        'IGCSE Mocks',
+        'AS Level Past Papers',
+        'AS Level Mocks',
+        'A Level Past Papers',
+        'A Level Mocks',
+      ],
+      '8-4-4': [],
+    };
+
+    // Term values are sent to the API as-is. Cambridge series are strings.
+    const STANDARD_TERMS = [['1', 'Term 1'], ['2', 'Term 2'], ['3', 'Term 3']];
+    const CAMBRIDGE_SERIES = [
+      ['May/June', 'May/June Series'],
+      ['Oct/Nov', 'Oct/Nov Series'],
+      ['Feb/March', 'Feb/March Series'],
+    ];
+    const TERMS_BY_CURRICULUM = {
+      'CBE': STANDARD_TERMS,
+      '8-4-4': STANDARD_TERMS,
+      'Cambridge': [...STANDARD_TERMS, ...CAMBRIDGE_SERIES],
+    };
+
+    const DEFAULT_BUNDLE_HINT = 'Full Set bundles should be uploaded as a .zip file containing all subject PDFs.';
+
+    const typesFor = c => [...ALL_TYPES, ...(EXTRA_TYPES[c] || [])];
+    const termsFor = c => TERMS_BY_CURRICULUM[c] || STANDARD_TERMS;
+    const everyType = () => [...new Set([...ALL_TYPES, ...Object.values(EXTRA_TYPES).flat()])];
+    const everyTerm = () => {
+      const seen = new Map();
+      Object.values(TERMS_BY_CURRICULUM).flat().forEach(([v, l]) => seen.set(v, l));
+      return [...seen.entries()];
+    };
+
+    const optionsHtml = list => list.map(t => `<option value="${t}">${t}</option>`).join('');
+    const termOptionsHtml = list => list.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+
+    // Re-fill a <select> but keep the current choice when it is still valid.
+    function refill(select, html, placeholder) {
+      const previous = select.value;
+      select.innerHTML = (placeholder ? `<option value="">${placeholder}</option>` : '') + html;
+      if (previous && Array.from(select.options).some(o => o.value === previous)) {
+        select.value = previous;
+      }
+    }
+
+    function applyCurriculum() {
+      const c = document.getElementById('curriculum').value;
+
       const grade = document.getElementById('grade');
-      const options = this.value === 'CBE' ? CBC_GRADES : this.value === '844' ? FORM_GRADES : [];
-      grade.innerHTML = options.length
-        ? options.map(g => `<option value="${g}">${g}</option>`).join('')
+      const grades = GRADES_BY_CURRICULUM[c] || [];
+      grade.innerHTML = grades.length
+        ? optionsHtml(grades)
         : '<option value="">-- Select curriculum first --</option>';
-      autoTitle();
-    });
 
-    ['grade','subject','exam_type','term','year','is_bundle'].forEach(id => {
+      refill(document.getElementById('exam_type'), optionsHtml(typesFor(c)), '-- Select --');
+      refill(document.getElementById('term'), termOptionsHtml(termsFor(c)), '-- Select --');
+
+      // Paper / Variant only applies to Cambridge papers.
+      const paperWrap = document.getElementById('paper-wrap');
+      paperWrap.style.display = c === 'Cambridge' ? '' : 'none';
+      if (c !== 'Cambridge') document.getElementById('paper').value = '';
+
+      updateBundleHint();
+      autoTitle();
+    }
+
+    // Edit modal lists every type and term so any existing paper can be edited.
+    (function initSelects() {
+      refill(document.getElementById('exam_type'), optionsHtml(ALL_TYPES), '-- Select --');
+      refill(document.getElementById('term'), termOptionsHtml(STANDARD_TERMS), '-- Select --');
+      document.getElementById('edit-exam_type').innerHTML = optionsHtml(everyType());
+      document.getElementById('edit-term').innerHTML = termOptionsHtml(everyTerm());
+    })();
+
+    function updateBundleHint() {
+      const c = document.getElementById('curriculum').value;
+      const grade = document.getElementById('grade').value;
+      const num = parseInt((grade.match(/\d+/) || [])[0], 10);
+      const hint = document.getElementById('bundle-hint');
+
+      if (c === 'CBE' && grade.startsWith('Grade') && num >= 10) {
+        hint.textContent = 'Grade 10–12 learners follow pathways (STEM, Social Sciences, Arts & Sports). A Full Set bundle should cover one pathway, so say which one in the title.';
+      } else if (c === 'Cambridge' && grade.startsWith('Year') && num >= 10) {
+        hint.textContent = 'Year 10–13 (IGCSE and A Level) students choose their own subjects, so individual subjects sell better. Only use a bundle for a specific subject combination.';
+      } else {
+        hint.textContent = DEFAULT_BUNDLE_HINT;
+      }
+    }
+
+    document.getElementById('curriculum').addEventListener('change', applyCurriculum);
+    document.getElementById('grade').addEventListener('change', updateBundleHint);
+
+    ['grade','subject','paper','exam_type','term','year','is_bundle'].forEach(id => {
       document.getElementById(id)?.addEventListener('change', autoTitle);
       document.getElementById(id)?.addEventListener('input', autoTitle);
     });
@@ -362,6 +474,7 @@
     function autoTitle() {
       const grade    = document.getElementById('grade').value;
       const subject  = document.getElementById('subject').value.trim();
+      const paper    = document.getElementById('paper').value.trim();
       const examType = document.getElementById('exam_type').value;
       const term     = document.getElementById('term').value;
       const year     = document.getElementById('year').value;
@@ -369,8 +482,9 @@
 
       if (grade && examType && term && year) {
         const subjectPart = bundle ? 'Full Set' : (subject || '');
+        const termPart = /^\d+$/.test(term) ? `Term ${term}` : `${term} Series`;
         document.getElementById('title').value =
-          [grade, subjectPart, examType, 'Term', term, year].filter(Boolean).join(' ');
+          [grade, subjectPart, paper, examType, termPart, year].filter(Boolean).join(' ');
       }
     }
 
@@ -394,11 +508,13 @@
       formData.append('year',       document.getElementById('year').value);
       formData.append('price',      document.getElementById('price').value);
       formData.append('is_bundle',  document.getElementById('is_bundle').checked);
+      const paperValue = document.getElementById('paper').value.trim();
+      if (paperValue) formData.append('paper', paperValue);
       const fileInput = document.getElementById('file');
       if (fileInput.files[0]) formData.append('file', fileInput.files[0]);
 
       btn.disabled = true;
-      btn.textContent = 'Uploading…';
+      btn.querySelector('span').textContent = 'Uploading…';
       status.style.display = 'none';
 
       try {
@@ -419,7 +535,7 @@
       } finally {
         status.style.display = 'block';
         btn.disabled = false;
-        btn.textContent = 'Upload Paper';
+        btn.querySelector('span').textContent = 'Upload Paper';
       }
     }
 
@@ -502,8 +618,30 @@
 
       document.getElementById('edit-id').value = paper.id;
       document.getElementById('edit-title').value = paper.title;
-      document.getElementById('edit-exam_type').value = paper.exam_type;
-      document.getElementById('edit-term').value = paper.term;
+
+      // Papers uploaded with an older type name (e.g. "Mid Term") are not in the
+      // new list. Add it as an option so saving does not silently change it.
+      const typeSelect = document.getElementById('edit-exam_type');
+      Array.from(typeSelect.querySelectorAll('option[data-legacy]')).forEach(o => o.remove());
+      if (paper.exam_type && !everyType().includes(paper.exam_type)) {
+        const legacy = document.createElement('option');
+        legacy.value = paper.exam_type;
+        legacy.textContent = `${paper.exam_type} (old name)`;
+        legacy.setAttribute('data-legacy', '');
+        typeSelect.appendChild(legacy);
+      }
+      typeSelect.value = paper.exam_type;
+
+      const termSelect = document.getElementById('edit-term');
+      Array.from(termSelect.querySelectorAll('option[data-legacy]')).forEach(o => o.remove());
+      if (paper.term != null && !Array.from(termSelect.options).some(o => o.value === String(paper.term))) {
+        const legacyTerm = document.createElement('option');
+        legacyTerm.value = paper.term;
+        legacyTerm.textContent = String(paper.term);
+        legacyTerm.setAttribute('data-legacy', '');
+        termSelect.appendChild(legacyTerm);
+      }
+      termSelect.value = paper.term;
       document.getElementById('edit-year').value = paper.year;
       document.getElementById('edit-price').value = paper.price;
       document.getElementById('edit-active').checked = paper.active;
