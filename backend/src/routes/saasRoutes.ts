@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { Router, Request, Response, NextFunction, RequestHandler } from "express";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { Pool } from "pg";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";

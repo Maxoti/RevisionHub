@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { Pool } from "pg";
 import { formatPhone } from "../services/mpesa.service";
 import { TENANT_MODE, signToken, requireAuth } from "../middleware/tenantAuth";

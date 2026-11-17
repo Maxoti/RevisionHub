@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createSaasRouter = createSaasRouter;
 const crypto_1 = __importDefault(require("crypto"));
 const express_1 = require("express");
-const bcrypt_1 = __importDefault(require("bcrypt"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const client_s3_1 = require("@aws-sdk/client-s3");
 const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
 const vaultCrypto_1 = require("../utils/vaultCrypto");
@@ -515,7 +515,7 @@ function createSaasRouter(pool) {
             if (newPassword.length < 8 || Buffer.byteLength(newPassword) > 72) {
                 return res.status(400).json({ error: "Password must be 8-72 characters." });
             }
-            const hash = await bcrypt_1.default.hash(newPassword, 12);
+            const hash = await bcryptjs_1.default.hash(newPassword, 12);
             const r = await pool.query(`UPDATE public.users
               SET password_hash = $1, failed_login_attempts = 0,
                   locked_until = NULL, updated_at = now()

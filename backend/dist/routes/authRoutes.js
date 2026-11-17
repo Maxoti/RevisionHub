@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createAuthRouter = createAuthRouter;
 const express_1 = require("express");
-const bcrypt_1 = __importDefault(require("bcrypt"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const mpesa_service_1 = require("../services/mpesa.service");
 const tenantAuth_1 = require("../middleware/tenantAuth");
 // Slugs that would collide with frontend routes or look official
@@ -19,7 +19,7 @@ const LOCK_MINUTES = 15;
 const BCRYPT_ROUNDS = 12;
 // Used to burn the same CPU time when the username does not exist,
 // so response time doesn't reveal which usernames are registered.
-const DUMMY_HASH = bcrypt_1.default.hashSync("not-a-real-password", BCRYPT_ROUNDS);
+const DUMMY_HASH = bcryptjs_1.default.hashSync("not-a-real-password", BCRYPT_ROUNDS);
 const str = (v) => (typeof v === "string" ? v : "");
 // Same rule as SignUpPage's slug input
 const normalizeSlug = (s) => s.toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/^-+|-+$/g, "");
@@ -68,7 +68,7 @@ function createAuthRouter(pool) {
         catch {
             return res.status(400).json({ error: "Enter a valid Kenyan phone number." });
         }
-        const passwordHash = await bcrypt_1.default.hash(password, BCRYPT_ROUNDS);
+        const passwordHash = await bcryptjs_1.default.hash(password, BCRYPT_ROUNDS);
         const client = await pool.connect();
         try {
             await client.query("BEGIN");
@@ -173,7 +173,7 @@ function createAuthRouter(pool) {
                 });
             }
             // Always run bcrypt so timing doesn't reveal whether the user exists
-            const ok = await bcrypt_1.default.compare(password, u ? u.password_hash : DUMMY_HASH);
+            const ok = await bcryptjs_1.default.compare(password, u ? u.password_hash : DUMMY_HASH);
             if (!u || !ok) {
                 if (u) {
                     await pool.query(`UPDATE public.users
