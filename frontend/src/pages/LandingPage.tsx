@@ -1,12 +1,10 @@
 // frontend/src/pages/LandingPage.tsx
 import { useEffect } from "react";
 
-// Change prices and branding here only. Keep them in step with the backend
-// (the billing messages in saasRoutes.ts).
+// Branding lives here. No prices are shown on this page: the activation fee
+// is shown to the teacher at signup, before they pay anything.
 const SITE_NAME = "EdusyncHub";
 const ROOT_DOMAIN = "edusynchub.co.ke";
-const SETUP_FEE = "KES 4000";
-const MONTHLY_FEE = "KES 300";
 
 const FAQS = [
   {
@@ -18,8 +16,16 @@ const FAQS = [
     a: "Straight into your own M-Pesa Buy Goods Till. We never hold your sales money and we take no commission or percentage.",
   },
   {
+    q: "What does it cost to go live?",
+    a: "Creating your store and uploading papers is free. When you are ready to take payments, your activation fee depends on your curriculum and is shown to you before you pay. There are no hidden charges and no commission on your sales.",
+  },
+  {
     q: "What do I need to get started?",
     a: "Just your phone number and a store name. You can create your storefront and upload papers before paying anything. When you are ready to sell, you will need your own M-Pesa Buy Goods Till number.",
+  },
+  {
+    q: "Can I sell more than one curriculum?",
+    a: "Yes. One store can hold CBE, 8-4-4 and Cambridge papers. Buyers can filter by curriculum, grade or year, type, term and year of the paper.",
   },
   {
     q: "What happens if I miss a monthly payment?",
@@ -27,7 +33,7 @@ const FAQS = [
   },
   {
     q: "Which curricula and subjects can I sell?",
-    a: "CBE, 8-4-4 and IGCSE papers across all grades, terms and subjects, including marking schemes and bundles.",
+    a: "CBE papers from Playgroup to Grade 12, 8-4-4 papers from Form 1 to Form 4, and Cambridge papers from Year 1 to Year 13 including Checkpoint, IGCSE, AS Level and A Level. All subjects, terms and series, with marking schemes and bundles.",
   },
 ];
 
@@ -54,10 +60,10 @@ export default function LandingPage() {
             How it works
           </a>
           <a
-            href="#pricing"
+            href="#plans"
             className="hidden md:block text-sm text-[#6B7280] hover:text-[#1A56DB]"
           >
-            Pricing
+            Plans
           </a>
           <a
             href="#faq"
@@ -86,16 +92,15 @@ export default function LandingPage() {
       <section className="px-6 md:px-12 py-12 md:py-20 grid md:grid-cols-2 gap-12 items-center w-full max-w-7xl mx-auto">
         <div>
           <p className="text-xs tracking-[0.2em] uppercase text-[#6B7280] font-medium mb-4">
-            For Kenyan teachers
+            For CBE, Cambridge &amp; 8-4-4 teachers
           </p>
           <h1 className="font-serif font-bold text-4xl md:text-5xl leading-tight text-[#16233D]">
             Turn your revision papers into a steady income.
           </h1>
           <p className="text-lg text-[#6B7280] mt-6 leading-relaxed">
             Create your storefront and upload your exam papers free. Parents and
-            students across Kenya pay KES 50 to 100 via M-Pesa STK Push for an
-            instant download, and 100% of every sale goes directly into your
-            own M-Pesa Buy Goods Till.
+            students pay via M-Pesa STK Push for an instant download, and 100%
+            of every sale goes directly into your own M-Pesa Buy Goods Till.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <a
@@ -105,14 +110,14 @@ export default function LandingPage() {
               Start free and upload papers
             </a>
             <span className="text-sm text-[#6B7280]">
-              {SETUP_FEE} one-time setup · {MONTHLY_FEE}/month
+              Free to start. Pay only when you are ready to sell.
             </span>
           </div>
 
           <div className="mt-10 grid grid-cols-3 gap-6 max-w-lg">
+            <Stat value="0%" label="Platform commission" />
             <Stat value="100%" label="Direct to your Till" />
-            <Stat value={SETUP_FEE} label="One-time onboarding" />
-            <Stat value={MONTHLY_FEE} label="Monthly platform fee" />
+            <Stat value="3" label="Curricula supported" />
           </div>
         </div>
 
@@ -120,18 +125,18 @@ export default function LandingPage() {
             is never blank. The WebP is the small, fast version; browsers
             that can't use it fall back to the JPG. */}
         <div className="relative aspect-[500/749] max-h-[620px] w-full mx-auto rounded-3xl overflow-hidden shadow-sm bg-[#F7F9FC]">
-        <picture>
-  <source srcSet="/images/wanjiku.webp" type="image/webp" />
-  <img
-    src="/images/wanjiku-compressed.jpg"
-    alt="A Kenyan teacher"
-    width={500}
-    height={749}
-    fetchPriority="high"
-    decoding="async"
-    className="w-full h-full object-cover object-[50%_35%]"
-  />
-</picture>
+          <picture>
+            <source srcSet="/images/wanjiku.webp" type="image/webp" />
+            <img
+              src="/images/wanjiku-compressed.jpg"
+              alt="A Kenyan teacher"
+              width={500}
+              height={749}
+              fetchPriority="high"
+              decoding="async"
+              className="w-full h-full object-cover object-[50%_35%]"
+            />
+          </picture>
         </div>
       </section>
 
@@ -150,7 +155,7 @@ export default function LandingPage() {
             <Step
               number="2"
               title="Connect your M-Pesa Till"
-              description={`When you are ready to sell, pay ${SETUP_FEE} one-time onboarding. It covers your M-Pesa Till STK Push integration and your first month.`}
+              description="Choose your curriculum (CBE, Cambridge or 8-4-4) and request activation. We set up STK Push on your Till so buyers pay straight to you. You see your activation fee before you pay."
             />
             <Step
               number="3"
@@ -173,54 +178,61 @@ export default function LandingPage() {
             description="We never hold your money or deduct a percentage. Every shilling paid by buyers goes straight to your M-Pesa Till."
           />
           <ValueProp
-            title="Built for Kenyan classrooms"
-            description="CBE, 8-4-4 and IGCSE papers across all grades and terms, with the download link sent to buyers on WhatsApp and email."
+            title="Built for CBE, 8-4-4 and Cambridge"
+            description="Papers for CBE (Playgroup to Grade 12), 8-4-4 (Form 1 to 4) and Cambridge (Year 1 to 13), with the download link sent to buyers on WhatsApp and email."
           />
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="bg-[#F7F9FC] py-16 w-full scroll-mt-4">
-        <div className="px-6 md:px-12 max-w-4xl mx-auto">
+      {/* Plans */}
+      <section id="plans" className="bg-[#F7F9FC] py-16 w-full scroll-mt-4">
+        <div className="px-6 md:px-12 max-w-5xl mx-auto">
           <h2 className="font-serif font-bold text-2xl md:text-3xl text-center text-[#16233D] mb-3">
-            Simple, honest pricing
+            Start free. Go live when you are ready.
           </h2>
           <p className="text-center text-sm text-[#6B7280] mb-10">
-            Start free. Pay only when you are ready to take payments.
+            Build your store and upload papers at no cost. Pick your curriculum
+            when you want to take payments.
           </p>
           <div className="grid md:grid-cols-3 gap-6">
-            <PriceCard
+            <PlanCard
               name="Start"
-              price="Free"
-              note="No card, no commitment"
+              title="Starter storefront"
+              note="Free to build and upload"
               items={[
-                "Your own store link",
-                "Upload papers and marking schemes",
-                "Set your own prices",
+                `Claim ${ROOT_DOMAIN}/yourname`,
+                "Upload unlimited papers and schemes",
+                "Set your own paper prices",
               ]}
+              cta={{ label: "Start free", href: "/signup" }}
             />
-            <PriceCard
+            <PlanCard
               name="Go live"
-              price={SETUP_FEE}
-              note="One-time"
+              title="CBE & 8-4-4"
+              note="For national curriculum teachers"
               highlight
               items={[
-                "M-Pesa Till STK Push set up for you",
-                "First month included",
-                "100% of sales to your Till",
+                "Direct M-Pesa Till STK Push set up for you",
+                "Your store open to buyers",
+                "0% commission on all sales",
               ]}
+              cta={{ label: "Request activation", href: "/signup?curriculum=national" }}
             />
-            <PriceCard
-              name="Stay live"
-              price={`${MONTHLY_FEE}/month`}
-              note="After your first month"
+            <PlanCard
+              name="Go live"
+              title="Cambridge"
+              note="Year 1 to 13, IGCSE and A Level"
               items={[
-                "Keep your store open to buyers",
-                "Renew with a quick STK Push",
-                "No commission, ever",
+                "Direct M-Pesa Till STK Push set up for you",
+                "Built for Checkpoint, IGCSE, AS and A Level papers and bundles",
+                "0% commission on all sales",
               ]}
+              cta={{ label: "Request activation", href: "/signup?curriculum=cambridge" }}
             />
           </div>
+          <p className="text-center text-xs text-[#6B7280] mt-6">
+            Your activation fee is shown before you pay. No hidden charges.
+          </p>
         </div>
       </section>
 
@@ -311,31 +323,33 @@ function ValueProp({
   );
 }
 
-function PriceCard({
+function PlanCard({
   name,
-  price,
+  title,
   note,
   items,
+  cta,
   highlight = false,
 }: {
   name: string;
-  price: string;
+  title: string;
   note: string;
   items: string[];
+  cta: { label: string; href: string };
   highlight?: boolean;
 }) {
   return (
     <div
-      className={`rounded-2xl p-6 bg-white border ${
+      className={`flex flex-col rounded-2xl p-6 bg-white border ${
         highlight ? "border-[#1A56DB] shadow-md" : "border-black/5"
       }`}
     >
       <p className="text-xs tracking-[0.15em] uppercase text-[#6B7280] font-medium">
         {name}
       </p>
-      <p className="font-serif font-bold text-3xl text-[#16233D] mt-2">{price}</p>
+      <p className="font-serif font-bold text-2xl text-[#16233D] mt-2">{title}</p>
       <p className="text-xs text-[#6B7280] mt-1 mb-5">{note}</p>
-      <ul className="space-y-2 text-sm text-[#16233D]">
+      <ul className="space-y-2 text-sm text-[#16233D] flex-1">
         {items.map((i) => (
           <li key={i} className="flex gap-2">
             <span className="text-[#1A56DB]">✓</span>
@@ -343,6 +357,16 @@ function PriceCard({
           </li>
         ))}
       </ul>
+      <a
+        href={cta.href}
+        className={`mt-6 text-center rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
+          highlight
+            ? "bg-[#1A56DB] text-white hover:bg-[#1543ad]"
+            : "border border-[#1A56DB] text-[#1A56DB] hover:bg-[#1A56DB]/5"
+        }`}
+      >
+        {cta.label}
+      </a>
     </div>
   );
 }

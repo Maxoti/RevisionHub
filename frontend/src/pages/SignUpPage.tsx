@@ -4,6 +4,21 @@ import { Eye, EyeOff } from "lucide-react";
 const API_BASE =
   import.meta.env.VITE_API_URL || "https://edusynchub.co.ke";
 
+// Values must match what the upload form and storefront filters use.
+const CURRICULA = [
+  { value: "CBE", label: "CBE", hint: "Playgroup to Grade 12" },
+  { value: "Cambridge", label: "Cambridge", hint: "Year 1 to 13, IGCSE, A Level" },
+  { value: "8-4-4", label: "8-4-4", hint: "Form 1 to 4" },
+];
+
+// The landing page links here with ?curriculum=national or ?curriculum=cambridge.
+function initialCurricula(): string[] {
+  const param = new URLSearchParams(window.location.search).get("curriculum");
+  if (param === "cambridge") return ["Cambridge"];
+  if (param === "national") return ["CBE", "8-4-4"];
+  return [];
+}
+
 export default function SignUpPage() {
   const [form, setForm] = useState({
     storeName: "",
@@ -13,6 +28,7 @@ export default function SignUpPage() {
     password: "",
   });
   const [confirm, setConfirm] = useState("");
+  const [curricula, setCurricula] = useState<string[]>(initialCurricula);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -28,6 +44,11 @@ export default function SignUpPage() {
   const update =
     (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
       setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  const toggleCurriculum = (value: string) =>
+    setCurricula((list) =>
+      list.includes(value) ? list.filter((c) => c !== value) : [...list, value]
+    );
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -45,13 +66,17 @@ export default function SignUpPage() {
       setError("Store URL link must be at least 3 characters.");
       return;
     }
+    if (curricula.length === 0) {
+      setError("Choose at least one curriculum you teach.");
+      return;
+    }
 
     setSubmitting(true);
     try {
       const res = await fetch(`${API_BASE}/api/tenants/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, curricula }),
       });
       const data = await res.json();
 
@@ -92,7 +117,8 @@ export default function SignUpPage() {
           </h1>
           <p className="text-sm text-white/85 mt-2">
             Start free and upload your papers first. Activate M-Pesa Till
-            checkout whenever you are ready.
+            checkout whenever you are ready. Your activation fee is shown
+            before you pay.
           </p>
         </div>
 
@@ -134,6 +160,39 @@ export default function SignUpPage() {
               />
             </div>
           </div>
+
+          <fieldset>
+            <legend className="text-xs font-medium text-[#16233D] mb-1">
+              Which curriculum do you teach?
+            </legend>
+            <p className="text-xs text-[#6B7280] mb-2">
+              Choose all that apply. You can add more later.
+            </p>
+            <div className="grid gap-2">
+              {CURRICULA.map((c) => {
+                const checked = curricula.includes(c.value);
+                return (
+                  <label
+                    key={c.value}
+                    className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 cursor-pointer text-sm transition-colors ${
+                      checked
+                        ? "border-[#1A56DB] bg-[#1A56DB]/5"
+                        : "border-black/10 hover:border-[#1A56DB]/40"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleCurriculum(c.value)}
+                      className="h-4 w-4 accent-[#1A56DB]"
+                    />
+                    <span className="font-medium text-[#16233D]">{c.label}</span>
+                    <span className="text-xs text-[#6B7280]">{c.hint}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field
