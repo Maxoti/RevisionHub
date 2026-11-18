@@ -388,7 +388,7 @@ router.get("/store/:slug/papers", async (req: Request, res: Response) => {
   // ===================================================================
   // 3. PLATFORM BILLING CALLBACK (public endpoint, called by Safaricom)
   // ===================================================================
-  router.post("/mpesa/platform-callback/:key", async (req: Request, res: Response) => {
+   router.post("/mpesa/platform-callback/:key", async (req: Request, res: Response) => {
     if (!safeEqual(str(req.params.key), CALLBACK_SECRET)) {
       return res.status(403).json({ ResultCode: 1, ResultDesc: "Forbidden" });
     }
@@ -439,7 +439,7 @@ router.get("/store/:slug/papers", async (req: Request, res: Response) => {
         );
         await client.query(
           `UPDATE public.tenants
-              SET status = 'active',
+              SET status = CASE WHEN status = 'suspended' THEN status ELSE 'active' END,
                   subscription_ends_at =
                     GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + INTERVAL '30 days',
                   updated_at = NOW()
@@ -447,6 +447,15 @@ router.get("/store/:slug/papers", async (req: Request, res: Response) => {
           [payment.tenant_id]
         );
       } else {
+        // Log Safaricom's reason so failed payments can be diagnosed
+        console.error(
+          "[platform-callback] failed",
+          JSON.stringify({
+            code: cb.ResultCode,
+            desc: cb.ResultDesc,
+            id: cb.CheckoutRequestID,
+          })
+        );
         await client.query(
           `UPDATE public.platform_payments
               SET status = 'failed', updated_at = NOW()
