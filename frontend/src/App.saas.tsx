@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Paper } from './types';
 import PaperCard from './components/PaperCard';
-import BuyModal from './components/BuyModal';
-
+import SaasBuyModal from './components/SaasBuyModal';
 // ---------------------------------------------------------------------------
 // SaaS storefront (e.g. edusynchub.co.ke/jane).
 // The premium single-tenant sites keep using App.tsx. Do not import this file
@@ -323,8 +322,13 @@ export default function AppSaas() {
         )}
       </main>
 
-      {selectedPaper && (
-        <BuyModal paper={selectedPaper} onClose={() => setSelectedPaper(null)} />
+         {selectedPaper && (
+        <SaasBuyModal
+          paper={selectedPaper}
+          slug={slug}
+          whatsappNumber={typeof store?.whatsapp === 'string' ? store.whatsapp : undefined}
+          onClose={() => setSelectedPaper(null)}
+        />
       )}
     </div>
   );
