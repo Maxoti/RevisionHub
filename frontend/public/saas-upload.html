@@ -12,6 +12,7 @@
   label { display: block; margin-top: 1rem; font-weight: 600; font-size: .875rem; }
   input, select { width: 100%; padding: .6rem .75rem; margin-top: .3rem; border: 1px solid #ccc; border-radius: 6px; font-size: .9rem; background: #fff; }
   input:focus, select:focus, a:focus-visible, button:focus-visible { outline: 3px solid rgba(0,166,81,.35); outline-offset: 1px; border-color: #00a651; }
+  select:disabled { background: #f4f4f4; color: #333; cursor: not-allowed; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 3rem; }
   .full { grid-column: 1 / -1; }
   .hint { font-size: .75rem; color: #777; margin: .4rem 0 0; }
@@ -123,12 +124,8 @@
 
     <div>
       <label for="curriculum">Curriculum</label>
-      <select id="curriculum">
-        <option value="">-- Select --</option>
-        <option value="CBC">CBC (Playgroup to Grade 12)</option>
-        <option value="Cambridge">Cambridge (Year 1 to 13)</option>
-        <option value="8-4-4">8-4-4 (Form 1 to 4)</option>
-      </select>
+      <select id="curriculum"></select>
+      <p class="hint" id="curriculumNote"></p>
     </div>
     <div><label for="grade">Grade / Class</label><select id="grade"><option value="">-- Select curriculum first --</option></select></div>
 
@@ -170,15 +167,22 @@ const API = {
 Object.keys(API).forEach(k => (API[k] = API_BASE + API[k]));
 const pickToken = d => d.token || d.accessToken || d.jwt;
 
-/* ===== CURRICULUM DATA ===== */
+/* ===== CURRICULUM DATA =====
+   The curriculum values below must match what signup saves (tenants.curricula),
+   what the storefront filters use, and what is stored on papers. */
+const ALL_CURRICULA = [
+  { value: "CBE",       label: "CBE / CBC (Playgroup to Grade 12)" },
+  { value: "Cambridge", label: "Cambridge (Year 1 to 13)" },
+  { value: "8-4-4",     label: "8-4-4 (Class 7 to Form 4)" },
+];
 const GRADES = {
-  "CBC": ["Playgroup","PP1","PP2",...Array.from({length:12},(_,i)=>`Grade ${i+1}`)],
+  "CBE": ["Playgroup","PP1","PP2",...Array.from({length:12},(_,i)=>`Grade ${i+1}`)],
   "Cambridge": ["Nursery","Reception",...Array.from({length:13},(_,i)=>`Year ${i+1}`)],
   "8-4-4": ["Class 7","Class 8","Form 1","Form 2","Form 3","Form 4"],
 };
 const TYPES = ["Revision Materials","Topical Exams","Mid-Term Exams","End-Term Exams","Opener Exams","Mock Exams","Weekly Exams","Schemes of Work","Lesson Plans","Lesson Notes","Mnemonic Songs","Math Formulae"];
 const EXTRA_TYPES = {
-  "CBC": ["KPSEA (Grade 6)","KJSEA (Grade 9)","KCBE (Grade 12)","County / Cluster Mocks","Pre-Mocks","Holiday Assignments"],
+  "CBE": ["KPSEA (Grade 6)","KJSEA (Grade 9)","KCBE (Grade 12)","County / Cluster Mocks","Pre-Mocks","Holiday Assignments"],
   "Cambridge": ["Cambridge Checkpoint (Year 6 / Year 9)","IGCSE Past Papers","IGCSE Mocks","AS Level Past Papers","AS Level Mocks","A Level Past Papers","A Level Mocks"],
 };
 const TERMS = [["1","Term 1"],["2","Term 2"],["3","Term 3"]];
@@ -211,6 +215,8 @@ async function login(force = false) {
   const token = pickToken(data);
   if (!token) throw new Error("Login worked but no token came back.");
   session = { token, user: username };
+  // Show only the curricula this teacher chose at signup.
+  setAllowedCurricula(data.tenant && data.tenant.curricula);
   return token;
 }
 async function authed(path, opts = {}, retry = true) {
@@ -224,6 +230,29 @@ async function authed(path, opts = {}, retry = true) {
 const postJson = (path, body) => authed(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 /* ===== FORM BEHAVIOUR ===== */
+
+// Limits the Curriculum dropdown to the teacher's own curricula. An empty or
+// missing list (older stores, or before sign-in) shows all three.
+let allowedKey = null;
+function setAllowedCurricula(list) {
+  const chosen = Array.isArray(list) ? ALL_CURRICULA.filter(c => list.includes(c.value)) : [];
+  const allowed = chosen.length ? chosen : ALL_CURRICULA;
+  const key = allowed.map(c => c.value).join("|");
+  if (key === allowedKey) return;            // nothing changed: keep what the teacher has typed
+  allowedKey = key;
+
+  const select = $("curriculum"), previous = select.value;
+  const single = allowed.length === 1;
+  select.innerHTML = (single ? "" : '<option value="">-- Select --</option>') +
+    allowed.map(c => `<option value="${c.value}">${c.label}</option>`).join("");
+  if (allowed.some(c => c.value === previous)) select.value = previous;
+  select.disabled = single;                  // a one-curriculum store has nothing to choose
+  $("curriculumNote").textContent = chosen.length && chosen.length < ALL_CURRICULA.length
+    ? `Your store sells: ${chosen.map(c => c.value).join(", ")}.`
+    : "";
+  applyCurriculum();
+}
+
 function applyCurriculum() {
   const c = $("curriculum").value;
   $("grade").innerHTML = GRADES[c] ? opts(GRADES[c], "-- Select --") : '<option value="">-- Select curriculum first --</option>';
@@ -297,6 +326,7 @@ async function upload() {
   if (isBundle && ext !== "zip") return toast("Full Set bundles must be a .zip file", false);
   if (!isBundle && ext !== "pdf") return toast("Single papers must be a PDF", false);
   const contentType = CONTENT_TYPES[ext];
+  if (!$("curriculum").value) return toast("Choose a curriculum", false);
   const title = $("title").value.trim();
   if (!title) return toast("Add a title, or fill in the fields to generate one", false);
   const price = Number($("price").value);
@@ -383,6 +413,8 @@ async function loadPapers() {
   try {
     const data = await authed(API.dashboard);
     renderStatus(data.tenant || {});
+    // Also honour the dashboard's own copy of the list when the server sends it.
+    if (data.tenant && Array.isArray(data.tenant.curricula)) setAllowedCurricula(data.tenant.curricula);
     renderPapers(data.papers || []);
   } catch (e) { $("papers").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
@@ -420,6 +452,7 @@ $("papers").addEventListener("click", e => {
 $("papers").addEventListener("change", e => {
   if (e.target.id === "pageSize") { pageSize = Number(e.target.value); page = 1; drawPage(); }
 });
+setAllowedCurricula(null);   // all three until the teacher signs in
 onBundleToggle();
 </script>
 </body>
