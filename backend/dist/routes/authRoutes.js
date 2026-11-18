@@ -14,6 +14,9 @@ const RESERVED_SLUGS = new Set([
     "register", "upload", "dashboard", "saas", "static", "assets", "images",
     "default", "support", "help", "billing", "pricing", "about", "contact",
 ]);
+// Must match the curriculum values used by SignUpPage, the upload form and
+// the storefront filters.
+const ALLOWED_CURRICULA = ["CBE", "Cambridge", "8-4-4"];
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_MINUTES = 15;
 const BCRYPT_ROUNDS = 12;
@@ -23,6 +26,16 @@ const DUMMY_HASH = bcryptjs_1.default.hashSync("not-a-real-password", BCRYPT_ROU
 const str = (v) => (typeof v === "string" ? v : "");
 // Same rule as SignUpPage's slug input
 const normalizeSlug = (s) => s.toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/^-+|-+$/g, "");
+// Keeps only known curricula, removes duplicates, preserves the allowed order.
+// Returns null when the value is present but not an array (bad request).
+function parseCurricula(v) {
+    if (v === undefined || v === null)
+        return [];
+    if (!Array.isArray(v))
+        return null;
+    const picked = new Set(v.filter((x) => typeof x === "string"));
+    return ALLOWED_CURRICULA.filter((c) => picked.has(c));
+}
 function createAuthRouter(pool) {
     const router = (0, express_1.Router)();
     // ===================================================================
@@ -38,8 +51,12 @@ function createAuthRouter(pool) {
         const username = str(body.username).trim().toLowerCase();
         const password = str(body.password);
         const rawPhone = str(body.phone).trim();
+        const curricula = parseCurricula(body.curricula);
         if (!storeName || !slug || !username || !rawPhone || !password) {
             return res.status(400).json({ error: "All fields are required." });
+        }
+        if (curricula === null) {
+            return res.status(400).json({ error: "Invalid curriculum selection." });
         }
         if (storeName.length < 2 || storeName.length > 100) {
             return res.status(400).json({ error: "Store name must be 2-100 characters." });
@@ -86,16 +103,17 @@ function createAuthRouter(pool) {
                 }
                 const upd = await client.query(`UPDATE public.tenants
               SET store_name = $2, slug = $3, phone_number = $4,
+                  curricula = $5::text[],
                   status = 'active', updated_at = now()
             WHERE id = $1
-        RETURNING id, slug, store_name`, [def.rows[0].id, storeName, slug, phone]);
+        RETURNING id, slug, store_name, curricula`, [def.rows[0].id, storeName, slug, phone, curricula]);
                 tenant = upd.rows[0];
             }
             else {
                 const ins = await client.query(`INSERT INTO public.tenants
-                  (store_name, slug, phone_number, status, setup_fee_paid, mpesa_status)
-           VALUES ($1, $2, $3, 'active', false, 'unconfigured')
-        RETURNING id, slug, store_name`, [storeName, slug, phone]);
+                  (store_name, slug, phone_number, curricula, status, setup_fee_paid, mpesa_status)
+           VALUES ($1, $2, $3, $4::text[], 'active', false, 'unconfigured')
+        RETURNING id, slug, store_name, curricula`, [storeName, slug, phone, curricula]);
                 tenant = ins.rows[0];
             }
             const userRes = await client.query(`INSERT INTO public.users (tenant_id, username, password_hash, phone_number, role)
@@ -116,6 +134,7 @@ function createAuthRouter(pool) {
                     id: tenant.id,
                     slug: tenant.slug,
                     storeName: tenant.store_name,
+                    curricula: tenant.curricula,
                     setupFeePaid: false,
                     mpesaStatus: "unconfigured",
                 },
@@ -162,7 +181,8 @@ function createAuthRouter(pool) {
                 u.status AS user_status,
                 (u.locked_until IS NOT NULL AND u.locked_until > now()) AS is_locked,
                 t.slug, t.store_name, t.status AS tenant_status,
-                t.setup_fee_paid, t.subscription_ends_at, t.mpesa_status
+                t.setup_fee_paid, t.subscription_ends_at, t.mpesa_status,
+                t.curricula
            FROM public.users u
            JOIN public.tenants t ON t.id = u.tenant_id
           WHERE lower(u.username) = $1`, [username]);
@@ -209,6 +229,7 @@ function createAuthRouter(pool) {
                     id: u.tenant_id,
                     slug: u.slug,
                     storeName: u.store_name,
+                    curricula: u.curricula ?? [],
                     setupFeePaid: u.setup_fee_paid,
                     mpesaStatus: u.mpesa_status,
                     subscriptionEndsAt: endsAt,
@@ -228,7 +249,7 @@ function createAuthRouter(pool) {
         try {
             const r = await pool.query(`SELECT u.id, u.username, u.role,
                 t.id AS tenant_id, t.slug, t.store_name, t.setup_fee_paid,
-                t.subscription_ends_at, t.mpesa_status
+                t.subscription_ends_at, t.mpesa_status, t.curricula
            FROM public.users u
            JOIN public.tenants t ON t.id = u.tenant_id
           WHERE u.id = $1 AND u.tenant_id = $2 AND u.status = 'active'`, [req.auth.userId, req.auth.tenantId]);
@@ -242,6 +263,7 @@ function createAuthRouter(pool) {
                     id: row.tenant_id,
                     slug: row.slug,
                     storeName: row.store_name,
+                    curricula: row.curricula ?? [],
                     setupFeePaid: row.setup_fee_paid,
                     mpesaStatus: row.mpesa_status,
                     subscriptionEndsAt: endsAt,
