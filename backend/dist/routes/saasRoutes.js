@@ -344,13 +344,19 @@ function createSaasRouter(pool) {
               SET status = 'completed', mpesa_receipt = $1, updated_at = NOW()
             WHERE id = $2`, [receipt ? String(receipt) : null, payment.id]);
                 await client.query(`UPDATE public.tenants
-              SET status = 'active',
+              SET status = CASE WHEN status = 'suspended' THEN status ELSE 'active' END,
                   subscription_ends_at =
                     GREATEST(COALESCE(subscription_ends_at, NOW()), NOW()) + INTERVAL '30 days',
                   updated_at = NOW()
             WHERE id = $1`, [payment.tenant_id]);
             }
             else {
+                // Log Safaricom's reason so failed payments can be diagnosed
+                console.error("[platform-callback] failed", JSON.stringify({
+                    code: cb.ResultCode,
+                    desc: cb.ResultDesc,
+                    id: cb.CheckoutRequestID,
+                }));
                 await client.query(`UPDATE public.platform_payments
               SET status = 'failed', updated_at = NOW()
             WHERE id = $1`, [payment.id]);
