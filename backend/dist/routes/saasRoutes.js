@@ -13,6 +13,9 @@ const vaultCrypto_1 = require("../utils/vaultCrypto");
 const mpesa_service_1 = require("../services/mpesa.service");
 const tenantAuth_1 = require("../middleware/tenantAuth");
 const tenantDb_1 = require("../utils/tenantDb");
+const saas_purchase_controller_1 = require("../controllers/saas.purchase.controller");
+const saas_download_controller_1 = require("../controllers/saas.download.controller");
+const saas_sales_controller_1 = require("../controllers/saas.sales.controller");
 // ---------------------------------------------------------------------
 // Config (fail fast: no silent fallback secrets)
 // ---------------------------------------------------------------------
@@ -128,7 +131,8 @@ function createSaasRouter(pool) {
     router.get("/store/:slug/papers", async (req, res) => {
         try {
             const slug = str(req.params.slug).toLowerCase().slice(0, 60);
-            const tr = await pool.query(`SELECT id, store_name, slug, setup_fee_paid, mpesa_status, status
+            const tr = await pool.query(`SELECT id, store_name, slug, setup_fee_paid, mpesa_status, status,
+      whatsapp_number, phone_number
          FROM public.tenants WHERE slug = $1`, [slug]);
             const t = tr.rows[0];
             if (!t || t.status === "suspended") {
@@ -157,8 +161,13 @@ function createSaasRouter(pool) {
           WHERE ${where.join(" AND ")}
           ORDER BY created_at DESC
           LIMIT 500`, args));
+            const wa = (0, mpesa_service_1.formatPhone)(String(t.whatsapp_number || t.phone_number || ""));
             res.json({
-                store: { name: t.store_name, slug: t.slug },
+                store: {
+                    name: t.store_name,
+                    slug: t.slug,
+                    whatsapp: /^254\d{9}$/.test(wa) ? wa : null,
+                },
                 purchasable: t.setup_fee_paid === true && t.mpesa_status === "active",
                 papers: papers.rows,
             });
@@ -493,8 +502,14 @@ function createSaasRouter(pool) {
                 amount: 1,
                 accountReference: `TEST-${tenant.slug}`,
                 transactionDesc: "Till Verification",
-                callbackUrl: `${API_PUBLIC_URL}/api/mpesa/callback`,
+                callbackUrl: `${API_PUBLIC_URL}/api/mpesa/callback/${CALLBACK_SECRET}/${tenantId}`,
             });
+            console.log("[vault/test-stk] daraja:", JSON.stringify(stk));
+            if (String(stk.ResponseCode) !== "0") {
+                return res.status(502).json({
+                    error: stk.ResponseDescription || "Daraja did not accept the request.",
+                });
+            }
             res.json({
                 message: "Test KES 1 STK Push sent!",
                 checkoutRequestId: stk.CheckoutRequestID,
@@ -579,5 +594,13 @@ function createSaasRouter(pool) {
             res.status(500).json({ error: "Failed to reset password." });
         }
     });
+    // ===================================================================
+    // 10. BUYER PURCHASE FLOW + SELLER SALES
+    // ===================================================================
+    router.post("/purchases", saas_purchase_controller_1.createPurchase);
+    router.get("/purchases/:id/status", saas_purchase_controller_1.getPurchaseStatus);
+    router.post("/mpesa/callback/:key/:tenantId", saas_purchase_controller_1.mpesaCallback);
+    router.get("/store/:slug/download/:token", saas_download_controller_1.downloadByToken);
+    router.get("/tenants/sales", ...seller, saas_sales_controller_1.getSales);
     return router;
 }

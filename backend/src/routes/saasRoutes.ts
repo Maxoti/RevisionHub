@@ -12,6 +12,9 @@ import {
 } from "../services/mpesa.service";
 import { requireAuth, requireRole } from "../middleware/tenantAuth";
 import { withTenant } from "../utils/tenantDb";
+import { createPurchase, getPurchaseStatus, mpesaCallback } from "../controllers/saas.purchase.controller";
+import { downloadByToken } from "../controllers/saas.download.controller";
+import { getSales } from "../controllers/saas.sales.controller";
 
 // ---------------------------------------------------------------------
 // Config (fail fast: no silent fallback secrets)
@@ -147,7 +150,8 @@ router.get("/store/:slug/papers", async (req: Request, res: Response) => {
   try {
     const slug = str(req.params.slug).toLowerCase().slice(0, 60);
     const tr = await pool.query(
-      `SELECT id, store_name, slug, setup_fee_paid, mpesa_status, status
+      `SELECT id, store_name, slug, setup_fee_paid, mpesa_status, status,
+      whatsapp_number, phone_number
          FROM public.tenants WHERE slug = $1`,
       [slug]
     );
@@ -179,12 +183,18 @@ router.get("/store/:slug/papers", async (req: Request, res: Response) => {
         args
       )
     );
+        const wa = formatPhone(String(t.whatsapp_number || t.phone_number || ""));
 
     res.json({
-      store: { name: t.store_name, slug: t.slug },
+      store: {
+        name: t.store_name,
+        slug: t.slug,
+        whatsapp: /^254\d{9}$/.test(wa) ? wa : null,
+      },
       purchasable: t.setup_fee_paid === true && t.mpesa_status === "active",
       papers: papers.rows,
     });
+
   } catch (err: any) {
     console.error("[store/papers]", err.message);
     res.status(500).json({ error: "Could not load papers." });
@@ -613,14 +623,22 @@ router.get("/store/:slug/papers", async (req: Request, res: Response) => {
           tillNumber: tenant.till_number,
         };
 
-        const stk = await triggerRawBuyGoodsStkPush({
+               const stk = await triggerRawBuyGoodsStkPush({
           creds: tenantCreds,
           phone,
           amount: 1,
           accountReference: `TEST-${tenant.slug}`,
           transactionDesc: "Till Verification",
-          callbackUrl: `${API_PUBLIC_URL}/api/mpesa/callback`,
+          callbackUrl: `${API_PUBLIC_URL}/api/mpesa/callback/${CALLBACK_SECRET}/${tenantId}`,
         });
+
+        console.log("[vault/test-stk] daraja:", JSON.stringify(stk));
+
+        if (String((stk as any).ResponseCode) !== "0") {
+          return res.status(502).json({
+            error: (stk as any).ResponseDescription || "Daraja did not accept the request.",
+          });
+        }
 
         res.json({
           message: "Test KES 1 STK Push sent!",
@@ -728,6 +746,16 @@ router.get("/store/:slug/papers", async (req: Request, res: Response) => {
       }
     }
   );
+
+
+  // ===================================================================
+  // 10. BUYER PURCHASE FLOW + SELLER SALES
+  // ===================================================================
+  router.post("/purchases", createPurchase);
+  router.get("/purchases/:id/status", getPurchaseStatus);
+  router.post("/mpesa/callback/:key/:tenantId", mpesaCallback);
+  router.get("/store/:slug/download/:token", downloadByToken);
+  router.get("/tenants/sales", ...seller, getSales);
 
   return router;
 }
