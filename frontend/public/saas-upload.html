@@ -86,8 +86,8 @@
   <!-- Store setup + subscription + public link -->
   <section id="setupBanner" class="panel banner" hidden>
     <h3>Next step: activate your M-Pesa till</h3>
-    <p>Your store is live and buyers can already see your papers. To start receiving payments, send the one-time KES 4,000 setup fee (includes M-Pesa integration and month 1) to <strong id="supportNumber"></strong> and confirm on WhatsApp.</p>
-    <div class="actions"><a id="activateBtn" class="btn btn-wa" target="_blank" rel="noopener">Confirm KES 4,000 on WhatsApp</a></div>
+    <p id="setupText"></p>
+    <div class="actions"><a id="activateBtn" class="btn btn-wa" target="_blank" rel="noopener"></a></div>
   </section>
 
   <section id="subPanel" class="panel sub" hidden>
@@ -188,6 +188,15 @@ const EXTRA_TYPES = {
 const TERMS = [["1","Term 1"],["2","Term 2"],["3","Term 3"]];
 const SERIES = [["May/June","May/June Series"],["Oct/Nov","Oct/Nov Series"],["Feb/March","Feb/March Series"]];
 const CONTENT_TYPES = { pdf: "application/pdf", zip: "application/zip" };
+
+/* ===== ACTIVATION FEE (display only; you confirm payment in the vault) =====
+   Cambridge teachers pay the higher fee. A store that sells Cambridge and
+   another curriculum is charged the Cambridge fee. */
+const FEES = { national: 4000, cambridge: 7500 };
+const feeFor = list => (list.includes("Cambridge") ? FEES.cambridge : FEES.national);
+const kes = n => "KES " + Number(n).toLocaleString("en-US");
+let teacherCurricula = [];   // what this teacher chose at signup (empty = unknown)
+let lastTenant = {};
 const BUNDLE_HINT = "Full Set bundles must be uploaded as a .zip file containing all subject PDFs.";
 
 const $ = id => document.getElementById(id);
@@ -237,6 +246,7 @@ let allowedKey = null;
 function setAllowedCurricula(list) {
   const chosen = Array.isArray(list) ? ALL_CURRICULA.filter(c => list.includes(c.value)) : [];
   const allowed = chosen.length ? chosen : ALL_CURRICULA;
+  teacherCurricula = chosen.map(c => c.value);
   const key = allowed.map(c => c.value).join("|");
   if (key === allowedKey) return;            // nothing changed: keep what the teacher has typed
   allowedKey = key;
@@ -251,6 +261,7 @@ function setAllowedCurricula(list) {
     ? `Your store sells: ${chosen.map(c => c.value).join(", ")}.`
     : "";
   applyCurriculum();
+  renderSetupBanner();
 }
 
 function applyCurriculum() {
@@ -281,11 +292,24 @@ function updateTitle() {
 /* ===== STORE STATUS, SUBSCRIPTION AND STORE LINK ===== */
 const fmtDate = iso => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
+function renderSetupBanner() {
+  const fee = feeFor(teacherCurricula);
+  const includes = fee === FEES.cambridge
+    ? "It includes your M-Pesa payment integration, so buyers who visit your store can pay and download your materials."
+    : "It includes M-Pesa integration and month 1.";
+  $("setupText").innerHTML =
+    `Your store is live and buyers can already see your papers. To start receiving payments, send the one-time ${kes(fee)} activation fee to <strong>0${SUPPORT_WA.slice(3)}</strong> and confirm on WhatsApp. ${includes}`;
+  $("activateBtn").textContent = `Confirm ${kes(fee)} on WhatsApp`;
+  $("activateBtn").href = `https://wa.me/${SUPPORT_WA}?text=` +
+    encodeURIComponent(`Hello, I have sent the ${kes(fee)} activation fee for ${lastTenant.store_name || "my store"}.`);
+}
+
 function renderStatus(t) {
   const paid = Boolean(t.setup_fee_paid);
+  lastTenant = t;
   $("setupBanner").hidden = paid;
   $("subPanel").hidden = !paid;
-  $("activateBtn").href = `https://wa.me/${SUPPORT_WA}?text=` + encodeURIComponent(`Hello, I have sent the KES 4,000 setup fee for ${t.store_name || "my store"}.`);
+  renderSetupBanner();
 
   if (t.slug) {
     const url = `${STORE_BASE}/${t.slug}`;
@@ -425,7 +449,6 @@ async function deletePaper(id) {
 }
 
 /* ===== INIT ===== */
-$("supportNumber").textContent = "0" + SUPPORT_WA.slice(3);
 $("year").value = new Date().getFullYear();
 $("curriculum").addEventListener("change", applyCurriculum);
 $("isBundle").addEventListener("change", onBundleToggle);
