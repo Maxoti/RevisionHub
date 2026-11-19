@@ -30,6 +30,12 @@
   .pw-btn:hover { color: #0a7d2c; }
   .btn-outline { background: #fff; color: #086b2a; box-shadow: inset 0 0 0 2px #0a8f45; }
   .btn-outline:hover { background: #f1faf4; }
+  .btn-edit { background: #e8f1fb; color: #1d4f91; border-radius: 6px; padding: .35rem .8rem; }
+  .actions-cell { display: flex; gap: .4rem; flex-wrap: wrap; }
+  dialog { border: 0; border-radius: 12px; padding: 1.25rem 1.5rem; width: min(40rem, 92vw); box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  dialog h3 { margin-bottom: .5rem; }
+  .dlg-actions { display: flex; gap: .5rem; justify-content: flex-end; margin-top: 1.25rem; flex-wrap: wrap; }
   .btn-red { background: #fbe9e9; color: #a4282c; border-radius: 6px; padding: .35rem .8rem; }
   .btn-wa { background: #25a244; }
   #upload-btn { width: 100%; margin-top: 1.75rem; padding: .85rem; font-size: 1rem; }
@@ -143,12 +149,30 @@
     <p class="hint full" id="bundleHint"></p>
 
     <div class="full"><label for="title">Title (auto-generated, or type your own)</label><input id="title" placeholder="e.g. Grade 5 Mathematics Mid-Term Exams Term 2 2026" /></div>
-    <div class="full"><label for="file">File (PDF, or ZIP for bundles)</label><input id="file" type="file" accept=".pdf,application/pdf" /></div>
+    <div class="full"><label for="file">File (PDF, or ZIP for bundles)</label><input id="file" type="file" accept=".pdf,application/pdf" /><p class="hint" id="parseHint" aria-live="polite"></p></div>
     <div class="full"><button id="upload-btn" class="btn" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg><span>Upload Paper</span></button></div>
   </div>
 
   <div class="list-head"><h3>Manage Papers</h3><button id="refreshBtn" class="btn" type="button">Refresh</button></div>
   <div id="papers" class="papers"><div class="empty">Enter your admin username and password, then click Refresh.</div></div>
+
+<dialog id="editDlg" aria-labelledby="editTitleH">
+  <h3 id="editTitleH">Edit paper</h3>
+  <p class="hint">The file itself can't be changed here. To replace the file, delete the paper and upload it again.</p>
+  <div class="grid">
+    <div class="full"><label for="eTitle">Title</label><input id="eTitle" /></div>
+    <div class="full"><label for="eSubject">Subject</label><input id="eSubject" /></div>
+    <div><label for="eGrade">Grade / Class</label><select id="eGrade"></select></div>
+    <div><label for="eType">Type</label><select id="eType"></select></div>
+    <div><label for="eTerm">Term</label><select id="eTerm"></select></div>
+    <div><label for="eYear">Year</label><input id="eYear" type="number" /></div>
+    <div><label for="ePrice">Price (KES)</label><input id="ePrice" type="number" min="1" max="150000" /></div>
+  </div>
+  <div class="dlg-actions">
+    <button id="eCancel" class="btn btn-outline" type="button">Cancel</button>
+    <button id="eSave" class="btn" type="button">Save changes</button>
+  </div>
+</dialog>
 
 <script>
 /* ===== CONFIG ===== */
@@ -162,6 +186,7 @@ const API = {
   uploadUrl: "/api/tenants/upload-url",
   save:      "/api/tenants/papers/save",
   remove:    "/api/tenants/papers",
+  update:    "/api/tenants/papers",
   renew:     "/api/tenants/billing/renewal-stk",
 };
 Object.keys(API).forEach(k => (API[k] = API_BASE + API[k]));
@@ -238,6 +263,134 @@ async function authed(path, opts = {}, retry = true) {
 }
 const postJson = (path, body) => authed(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
+/* ===== FILENAME PARSER =====
+   Reads subject, grade, type, term, year (and Cambridge paper/variant) out of the
+   file name, e.g. "Grade_9_Integrated_Science_Schemes_of_Work_Term_2_2026.pdf". */
+const SUBJECT_PATTERNS = [
+  ["Integrated Science",        /\bintegrated\s+science\b/i],
+  ["Science and Technology",    /\bscience\s*(?:and|&)\s*technology\b/i],
+  ["Social Studies",            /\bsocial\s+studies\b/i],
+  ["Religious Education",       /\b(?:cre|ire|hre|religious\s+education)\b/i],
+  ["Creative Arts",             /\bcreative\s+arts?\b/i],
+  ["Pre-Technical Studies",     /\bpre[\s-]*technical\b/i],
+  ["Agriculture and Nutrition", /\bagriculture\s*(?:and|&)\s*nutrition\b/i],
+  ["Agriculture",               /\bagriculture\b/i],
+  ["Business Studies",          /\bbusiness(?:\s+studies)?\b/i],
+  ["Computer Studies",          /\bcomputer(?:\s+studies|\s+science)?\b/i],
+  ["Home Science",              /\bhome\s+science\b/i],
+  ["Biology",                   /\bbiology\b/i],
+  ["Chemistry",                 /\bchemistry\b/i],
+  ["Physics",                   /\bphysics\b/i],
+  ["Geography",                 /\bgeography\b/i],
+  ["History",                   /\bhistory\b/i],
+  ["Mathematics",               /\b(?:maths?|mathematics)\b/i],
+  ["Kiswahili",                 /\bkiswahili\b/i],
+  ["English",                   /\benglish\b/i],
+  ["Literature",                /\bliterature\b/i],
+  ["French",                    /\bfrench\b/i],
+  ["Music",                     /\bmusic\b/i],
+  ["Science",                   /\bscience\b/i],
+];
+const TYPE_PATTERNS = [
+  ["Schemes of Work",        /\bschemes?\b/i],
+  ["Lesson Plans",           /\blesson\s*plans?\b/i],
+  ["Lesson Notes",           /\blesson\s*notes?\b|\bnotes\b/i],
+  ["Mid-Term Exams",         /\bmid[\s-]*terms?\b/i],
+  ["End-Term Exams",         /\bend[\s-]*(?:of[\s-]*)?terms?\b/i],
+  ["Opener Exams",           /\bopener\b/i],
+  ["Weekly Exams",           /\bweekly\b/i],
+  ["Topical Exams",          /\btopical\b/i],
+  ["Pre-Mocks",              /\bpre[\s-]*mocks?\b/i],
+  ["County / Cluster Mocks", /\b(?:county|cluster)\b/i],
+  ["KPSEA (Grade 6)",        /\bkpsea\b/i],
+  ["KJSEA (Grade 9)",        /\bkjsea\b/i],
+  ["KCBE (Grade 12)",        /\bkcbe\b/i],
+  ["Holiday Assignments",    /\bholiday\b/i],
+  ["Cambridge Checkpoint (Year 6 / Year 9)", /\bcheckpoint\b/i],
+  ["IGCSE Mocks",            /\bigcse\b.*\bmocks?\b|\bmocks?\b.*\bigcse\b/i],
+  ["IGCSE Past Papers",      /\bigcse\b/i],
+  ["AS Level Mocks",         /\bas[\s-]*level\b.*\bmocks?\b|\bmocks?\b.*\bas[\s-]*level\b/i],
+  ["AS Level Past Papers",   /\bas[\s-]*level\b/i],
+  ["A Level Mocks",          /\ba[\s-]*level\b.*\bmocks?\b|\bmocks?\b.*\ba[\s-]*level\b/i],
+  ["A Level Past Papers",    /\ba[\s-]*level\b/i],
+  ["Mock Exams",             /\bmocks?\b/i],
+  ["Mnemonic Songs",         /\bmnemonic|\bsongs?\b/i],
+  ["Math Formulae",          /\bformulae?\b/i],
+  ["Revision Materials",     /\brevision\b/i],
+];
+const TERM_WORDS = { one: "1", two: "2", three: "3" };
+const SERIES_PATTERNS = [
+  ["May/June",   /\bmay[\s/]*june\b|\bm\s*\/\s*j\b/i],
+  ["Oct/Nov",    /\boct(?:ober)?[\s/]*nov(?:ember)?\b/i],
+  ["Feb/March",  /\bfeb(?:ruary)?[\s/]*mar(?:ch)?\b/i],
+];
+
+function cleanName(fileName) {
+  return fileName.replace(/\.[^.]+$/, "")
+    .replace(/^\d{10,}[-_ ]+/, "")              // storage timestamp prefix
+    .replace(/([a-z])([A-Z])/g, "$1 $2")        // GradeNine -> Grade Nine
+    .replace(/[_\-.()\[\]+]+/g, " ")
+    .replace(/\s+/g, " ").trim();
+}
+
+function detectCurriculum(text, allowed) {
+  const guesses = [];
+  if (/\b(igcse|as[\s-]*level|a[\s-]*level|checkpoint|cambridge|year\s*\d{1,2})\b/i.test(text)) guesses.push("Cambridge");
+  if (/\b(grade\s*\d{1,2}|gr\s*\d{1,2}|pp\s*[12]|playgroup|cbe|cbc|kpsea|kjsea)\b/i.test(text)) guesses.push("CBE");
+  if (/\b(form\s*[1-4]|class\s*[78]|8[\s-]*4[\s-]*4|kcse|kcpe)\b/i.test(text)) guesses.push("8-4-4");
+  const ok = guesses.filter(g => allowed.includes(g));
+  return ok.length === 1 ? ok[0] : "";
+}
+
+function detectGrade(text, list) {
+  const tries = [];
+  let m;
+  if ((m = text.match(/\bpp\s*([12])\b/i))) tries.push("PP" + m[1]);
+  if (/\bplay\s*group\b/i.test(text)) tries.push("Playgroup");
+  if (/\bnursery\b/i.test(text)) tries.push("Nursery");
+  if (/\breception\b/i.test(text)) tries.push("Reception");
+  if ((m = text.match(/\bg(?:r(?:ade)?)?\s*0?(\d{1,2})\b/i))) tries.push("Grade " + Number(m[1]));
+  if ((m = text.match(/\bform\s*([1-4])\b/i))) tries.push("Form " + m[1]);
+  if ((m = text.match(/\bclass\s*([78])\b/i))) tries.push("Class " + m[1]);
+  if ((m = text.match(/\byear\s*0?(\d{1,2})\b/i))) tries.push("Year " + Number(m[1]));
+  return tries.find(t => list.includes(t)) || "";
+}
+
+function detectTerm(text, termValues) {
+  let m = text.match(/\bterm\s*([123])\b|\bt([123])\b/i);
+  if (m) return termValues.includes(m[1] || m[2]) ? (m[1] || m[2]) : "";
+  m = text.match(/\bterm\s*(one|two|three)\b/i);
+  if (m) return TERM_WORDS[m[1].toLowerCase()];
+  const series = SERIES_PATTERNS.find(([, re]) => re.test(text));
+  return series && termValues.includes(series[0]) ? series[0] : "";
+}
+
+function parseFileName(fileName, curriculum, allowed) {
+  const text = cleanName(fileName);
+  const out = { text, curriculum: curriculum || detectCurriculum(text, allowed) };
+  const c = out.curriculum;
+
+  const ym = text.match(/\b(20\d{2})\b/);
+  out.year = ym ? ym[1] : "";
+
+  const sub = SUBJECT_PATTERNS.find(([, re]) => re.test(text));
+  out.subject = sub ? sub[0] : "";
+
+  if (c) {
+    const types = [...TYPES, ...(EXTRA_TYPES[c] || [])];
+    const termValues = (c === "Cambridge" ? [...TERMS, ...SERIES] : TERMS).map(t => t[0]);
+    out.grade = detectGrade(text, GRADES[c] || []);
+    const ty = TYPE_PATTERNS.find(([name, re]) => types.includes(name) && re.test(text));
+    out.type = ty ? ty[0] : "";
+    out.term = detectTerm(text, termValues);
+  } else { out.grade = ""; out.type = ""; out.term = ""; }
+
+  const pm = text.match(/\bpaper\s*(\d)\b(?:\s*variant\s*(\d))?/i);
+  out.paper = c === "Cambridge" && pm ? `Paper ${pm[1]}${pm[2] ? " Variant " + pm[2] : ""}` : "";
+  return out;
+}
+/* ===== END PARSER ===== */
+
 /* ===== FORM BEHAVIOUR ===== */
 
 // Limits the Curriculum dropdown to the teacher's own curricula. An empty or
@@ -266,6 +419,7 @@ function setAllowedCurricula(list) {
 
 function applyCurriculum() {
   const c = $("curriculum").value;
+  ["grade", "paperType", "term"].forEach(id => delete $(id).dataset.touched);
   $("grade").innerHTML = GRADES[c] ? opts(GRADES[c], "-- Select --") : '<option value="">-- Select curriculum first --</option>';
   const types = [...TYPES, ...(EXTRA_TYPES[c] || [])];
   const terms = c === "Cambridge" ? [...TERMS, ...SERIES] : TERMS;
@@ -374,6 +528,8 @@ async function upload() {
     });
     toast("Paper uploaded");
     $("file").value = ""; $("title").value = ""; delete $("title").dataset.manual;
+    $("parseHint").textContent = "";
+    AUTO_FIELDS.forEach(id => delete $(id).dataset.touched);
     loadPapers();
   } catch (err) { toast(err.message || "Upload failed. Check your details and try again.", false); }
   finally { btn.disabled = !subscriptionActive; }
@@ -408,7 +564,10 @@ function drawPage() {
       <td class="nowrap">${esc(p.grade)}</td>
       <td class="num">KES ${Number(p.price)}</td>
       <td><span class="badge">Active</span></td>
-      <td><button type="button" class="btn btn-red" data-del="${Number(p.id)}">Delete</button></td>
+      <td><div class="actions-cell">
+        <button type="button" class="btn btn-edit" data-edit="${Number(p.id)}">Edit</button>
+        <button type="button" class="btn btn-red" data-del="${Number(p.id)}">Delete</button>
+      </div></td>
     </tr>`).join("");
 
   const nav = pageList(page, total).map(n => n === "…"
@@ -448,15 +607,138 @@ async function deletePaper(id) {
   catch (e) { toast(e.message || "Could not delete the paper", false); }
 }
 
+/* ===== EDIT PAPER ===== */
+let editingId = null;
+
+function curriculumOf(p) {
+  if (p.curriculum && GRADES[p.curriculum]) return p.curriculum;
+  return teacherCurricula[0] || "CBE";
+}
+// Builds a <select> list and keeps the paper's current value even if it is
+// not in the standard list (older or custom values).
+function fillSelect(id, list, current, ph) {
+  const values = list.map(x => Array.isArray(x) ? x[0] : x);
+  const extra = current && !values.includes(String(current)) ? [String(current)] : [];
+  $(id).innerHTML = opts([...list, ...extra], ph);
+  $(id).value = current ?? "";
+}
+function openEdit(id) {
+  const p = allPapers.find(x => Number(x.id) === Number(id));
+  if (!p) return;
+  editingId = p.id;
+  const c = curriculumOf(p);
+  const types = [...TYPES, ...(EXTRA_TYPES[c] || [])];
+  const terms = c === "Cambridge" ? [...TERMS, ...SERIES] : TERMS;
+  $("eTitle").value = p.title || "";
+  $("eSubject").value = p.subject || "";
+  $("eSubject").disabled = Boolean(p.is_bundle);
+  fillSelect("eGrade", GRADES[c] || [], p.grade, "-- Select --");
+  fillSelect("eType", types, p.exam_type, "-- Select --");
+  fillSelect("eTerm", terms, p.term == null ? "" : String(p.term), "-- Select --");
+  $("eYear").value = p.year || "";
+  $("ePrice").value = p.price != null ? Number(p.price) : "";
+  $("editDlg").showModal();
+}
+async function saveEdit() {
+  const title = $("eTitle").value.trim();
+  const price = Number($("ePrice").value);
+  if (!title) return toast("Title can't be empty", false);
+  if (!Number.isFinite(price) || price < 1 || price > 150000) return toast("Price must be between KES 1 and 150,000", false);
+  const btn = $("eSave"); btn.disabled = true;
+  try {
+    await authed(`${API.update}/${editingId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        subject: $("eSubject").value.trim(),
+        grade: $("eGrade").value,
+        examType: $("eType").value,
+        term: $("eTerm").value,
+        year: Number($("eYear").value) || null,
+        price: Math.round(price),
+      }),
+    });
+    $("editDlg").close();
+    toast("Paper updated");
+    loadPapers();
+  } catch (e) { toast(e.message || "Could not update the paper", false); }
+  finally { btn.disabled = false; }
+}
+
+/* ===== AUTO-FILL FROM THE CHOSEN FILE ===== */
+const AUTO_FIELDS = ["grade","subject","paper","paperType","term","year"];
+
+// Only fill a field the seller has not typed in or picked themselves.
+function fillIfFree(id, value) {
+  const el = $(id);
+  if (!value || el.dataset.touched || el.disabled) return false;
+  if (el.tagName === "SELECT" && ![...el.options].some(o => o.value === value)) return false;
+  el.value = value;
+  return true;
+}
+
+function autofillFromFile() {
+  const file = $("file").files[0], hint = $("parseHint");
+  if (!file) { hint.textContent = ""; return; }
+
+  const allowed = (allowedKey ? allowedKey.split("|") : ALL_CURRICULA.map(c => c.value)).filter(Boolean);
+  const sel = $("curriculum");
+  let c = sel.value;
+  const info = parseFileName(file.name, c, allowed);
+
+  // Multi-curriculum stores: pick the curriculum only if the name makes it clear.
+  if (!c && info.curriculum) {
+    sel.value = info.curriculum;
+    applyCurriculum();
+    c = info.curriculum;
+    Object.assign(info, parseFileName(file.name, c, allowed));
+  }
+
+  const filled = [];
+  if (fillIfFree("subject", info.subject))   filled.push("subject");
+  if (fillIfFree("grade", info.grade))       filled.push("grade");
+  if (fillIfFree("paperType", info.type))    filled.push("type");
+  if (fillIfFree("term", info.term))         filled.push("term");
+  if (fillIfFree("year", info.year))         filled.push("year");
+  if (fillIfFree("paper", info.paper))       filled.push("paper");
+  updateTitle();
+
+  const missing = [];
+  if (!$("isBundle").checked && !$("subject").value) missing.push("subject");
+  if (!$("grade").value) missing.push("grade");
+  if (!$("paperType").value) missing.push("type");
+  if (!$("term").value) missing.push("term");
+
+  if (!c) hint.textContent = "Choose a curriculum and the grade, type and term will be filled from the file name.";
+  else hint.textContent =
+    (filled.length ? `Filled from the file name: ${filled.join(", ")}. ` : "") +
+    (missing.length ? `Please choose: ${missing.join(", ")}.` : "Check the details, then upload.");
+}
+
 /* ===== INIT ===== */
 $("year").value = new Date().getFullYear();
-$("curriculum").addEventListener("change", applyCurriculum);
+$("curriculum").addEventListener("change", () => { applyCurriculum(); autofillFromFile(); });
 $("isBundle").addEventListener("change", onBundleToggle);
-["grade","subject","paper","paperType","term","year"].forEach(id => { $(id).addEventListener("input", updateTitle); $(id).addEventListener("change", updateTitle); });
+AUTO_FIELDS.forEach(id => {
+  $(id).addEventListener("input", updateTitle);
+  $(id).addEventListener("change", updateTitle);
+  // A real user edit (not our own autofill) stops the file name from overwriting this field.
+  const mark = e => { if (e.isTrusted) $(id).dataset.touched = "1"; };
+  $(id).addEventListener("input", mark);
+  $(id).addEventListener("change", mark);
+});
+$("file").addEventListener("change", autofillFromFile);
+// Sign in as soon as both credentials are entered, so the store's curriculum is applied right away.
+$("adminPass").addEventListener("change", () => {
+  if ($("adminUser").value.trim() && $("adminPass").value) loadPapers();
+});
 $("title").addEventListener("input", () => { $("title").dataset.manual = $("title").value ? "1" : ""; });
 $("upload-btn").addEventListener("click", upload);
 $("refreshBtn").addEventListener("click", loadPapers);
 $("renewBtn").addEventListener("click", renew);
+$("eSave").addEventListener("click", saveEdit);
+$("eCancel").addEventListener("click", () => $("editDlg").close());
 $("pwToggle").addEventListener("click", () => {
   const show = $("adminPass").type === "password";
   $("adminPass").type = show ? "text" : "password";
@@ -467,6 +749,8 @@ $("pwToggle").addEventListener("click", () => {
 });
 $("copyBtn").addEventListener("click", () => navigator.clipboard.writeText($("storeUrl").textContent).then(() => toast("Link copied")));
 $("papers").addEventListener("click", e => {
+  const ed = e.target.closest("[data-edit]");
+  if (ed) return openEdit(ed.dataset.edit);
   const del = e.target.closest("[data-del]");
   if (del) return deletePaper(del.dataset.del);
   const pg = e.target.closest("[data-page]");
