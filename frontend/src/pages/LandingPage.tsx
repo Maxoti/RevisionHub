@@ -118,6 +118,8 @@ export default function LandingPage() {
             <Stat value="0%" label="Platform commission" />
             <Stat value="100%" label="Direct to your Till" />
             <Stat value="3" label="Curricula supported" />
+            <Stat value="400+" label="Teachers using the platform" />
+
           </div>
         </div>
 
@@ -155,7 +157,7 @@ export default function LandingPage() {
             <Step
               number="2"
               title="Connect your M-Pesa Till"
-              description="Choose your curriculum (CBE, Cambridge or 8-4-4) and request activation. We set up STK Push on your Till so buyers pay straight to you. You see your activation fee before you pay."
+              description="Choose your curriculum (CBE, Cambridge or 8-4-4) and request activation. We set up STK Push on your Till so buyers pay straight to you."
             />
             <Step
               number="3"
