@@ -4,18 +4,26 @@ import { Eye, EyeOff } from "lucide-react";
 const API_BASE =
   import.meta.env.VITE_API_URL || "https://edusynchub.co.ke";
 
-// Values must match what the upload form and storefront filters use.
-const CURRICULA = [
-  { value: "CBE", label: "CBE", hint: "Playgroup to Grade 12" },
-  { value: "Cambridge", label: "Cambridge", hint: "Year 1 to 13, IGCSE, A Level" },
-  { value: "8-4-4", label: "8-4-4", hint: "Form 1 to 4" },
+// CBE and 8-4-4 are taught together, so they are one choice here. The backend
+// still receives the individual curriculum values the upload form and the
+// storefront filters use (see CURRICULA_BY_GROUP).
+type CurriculumGroup = "national" | "cambridge";
+
+const CURRICULUM_GROUPS: { value: CurriculumGroup; label: string; hint: string }[] = [
+  { value: "national", label: "National (CBE & 8-4-4)", hint: "Playgroup to Grade 12, Form 1 to 4" },
+  { value: "cambridge", label: "Cambridge", hint: "Year 1 to 13, IGCSE, A Level" },
 ];
 
+const CURRICULA_BY_GROUP: Record<CurriculumGroup, string[]> = {
+  national: ["CBE", "8-4-4"],
+  cambridge: ["Cambridge"],
+};
+
 // The landing page links here with ?curriculum=national or ?curriculum=cambridge.
-function initialCurricula(): string[] {
+function initialGroups(): CurriculumGroup[] {
   const param = new URLSearchParams(window.location.search).get("curriculum");
-  if (param === "cambridge") return ["Cambridge"];
-  if (param === "national") return ["CBE", "8-4-4"];
+  if (param === "cambridge") return ["cambridge"];
+  if (param === "national") return ["national"];
   return [];
 }
 
@@ -28,7 +36,7 @@ export default function SignUpPage() {
     password: "",
   });
   const [confirm, setConfirm] = useState("");
-  const [curricula, setCurricula] = useState<string[]>(initialCurricula);
+  const [groups, setGroups] = useState<CurriculumGroup[]>(initialGroups);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -45,9 +53,9 @@ export default function SignUpPage() {
     (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
       setForm((f) => ({ ...f, [field]: e.target.value }));
 
-  const toggleCurriculum = (value: string) =>
-    setCurricula((list) =>
-      list.includes(value) ? list.filter((c) => c !== value) : [...list, value]
+  const toggleGroup = (value: CurriculumGroup) =>
+    setGroups((list) =>
+      list.includes(value) ? list.filter((g) => g !== value) : [...list, value]
     );
 
   const handleSubmit = async (e: FormEvent) => {
@@ -66,10 +74,11 @@ export default function SignUpPage() {
       setError("Store URL link must be at least 3 characters.");
       return;
     }
-    if (curricula.length === 0) {
+    if (groups.length === 0) {
       setError("Choose at least one curriculum you teach.");
       return;
     }
+    const curricula = groups.flatMap((g) => CURRICULA_BY_GROUP[g]);
 
     setSubmitting(true);
     try {
@@ -169,8 +178,8 @@ export default function SignUpPage() {
               Choose all that apply. You can add more later.
             </p>
             <div className="grid gap-2">
-              {CURRICULA.map((c) => {
-                const checked = curricula.includes(c.value);
+              {CURRICULUM_GROUPS.map((c) => {
+                const checked = groups.includes(c.value);
                 return (
                   <label
                     key={c.value}
@@ -183,7 +192,7 @@ export default function SignUpPage() {
                     <input
                       type="checkbox"
                       checked={checked}
-                      onChange={() => toggleCurriculum(c.value)}
+                      onChange={() => toggleGroup(c.value)}
                       className="h-4 w-4 accent-[#1A56DB]"
                     />
                     <span className="font-medium text-[#16233D]">{c.label}</span>
