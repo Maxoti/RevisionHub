@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.downloadByToken = downloadByToken;
 const db_saas_1 = __importDefault(require("../config/db.saas"));
-const storage_service_1 = require("../services/storage.service");
+const saas_storage_1 = require("../services/saas.storage");
 const saas_paymentLog_service_1 = require("../services/saas.paymentLog.service");
 const tenantDb_1 = require("../utils/tenantDb");
 // ---------------------------------------------------------------------------
@@ -85,7 +85,7 @@ async function downloadByToken(req, res) {
         }
         // Sign BEFORE burning the token: if signing fails, the buyer can retry
         // instead of being left with a used token and no file.
-        const url = await (0, storage_service_1.getSignedDownloadUrl)(purchase.file_key, 120);
+        const url = await (0, saas_storage_1.getSignedDownloadUrl)(purchase.file_key, 120);
         // Atomic claim: only one request can flip token_used, even if two arrive
         // at once. COALESCE covers a NULL token_used on older rows.
         const claim = await (0, tenantDb_1.withTenant)(db_saas_1.default, tid, (c) => c.query(`UPDATE purchases

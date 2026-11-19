@@ -8,7 +8,7 @@ import {
   triggerRawBuyGoodsStkPush,
   DarajaCredentials,
 } from '../services/mpesa.service';
-import { getSignedDownloadUrl } from '../services/storage.service';
+import { getSignedDownloadUrl } from '../services/saas.storage';
 import { notifyBuyer } from '../services/notifications.service';
 
 // ---------------------------------------------------------------------

@@ -11,7 +11,7 @@ const db_saas_1 = __importDefault(require("../config/db.saas"));
 const tenantDb_1 = require("../utils/tenantDb");
 const vaultCrypto_1 = require("../utils/vaultCrypto");
 const mpesa_service_1 = require("../services/mpesa.service");
-const storage_service_1 = require("../services/storage.service");
+const saas_storage_1 = require("../services/saas.storage");
 const notifications_service_1 = require("../services/notifications.service");
 // ---------------------------------------------------------------------
 // Config
@@ -255,7 +255,7 @@ async function mpesaCallback(req, res) {
     // never undo a payment that has already been recorded.
     if (completed && completed.fileKey) {
         try {
-            const downloadUrl = await (0, storage_service_1.getSignedDownloadUrl)(completed.fileKey, 24 * 60 * 60);
+            const downloadUrl = await (0, saas_storage_1.getSignedDownloadUrl)(completed.fileKey, 24 * 60 * 60);
             (0, notifications_service_1.notifyBuyer)({
                 phone: completed.phone,
                 email: completed.email,
