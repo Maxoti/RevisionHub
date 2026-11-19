@@ -179,6 +179,7 @@
 const API_BASE   = "https://api.edusynchub.co.ke";
 const STORE_BASE = "https://edusynchub.co.ke";      // public store = STORE_BASE/<slug>
 const SUPPORT_WA = "254729871381";                  // setup-fee number and WhatsApp
+const SHOW_ACTIVATION_BANNER = false;               // true = show the "activate your till" banner to unpaid stores
 
 const API = {
   login:     "/api/tenants/login",
@@ -461,7 +462,7 @@ function renderSetupBanner() {
 function renderStatus(t) {
   const paid = Boolean(t.setup_fee_paid);
   lastTenant = t;
-  $("setupBanner").hidden = paid;
+  $("setupBanner").hidden = paid || !SHOW_ACTIVATION_BANNER;
   $("subPanel").hidden = !paid;
   renderSetupBanner();
 
