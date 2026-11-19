@@ -4,15 +4,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.downloadByToken = downloadByToken;
-const db_1 = __importDefault(require("../config/db"));
-const storage_service_1 = require("../services/storage.service");
+const db_saas_1 = __importDefault(require("../config/db.saas"));
+const saas_storage_1 = require("../services/saas.storage");
 const paymentLog_service_1 = require("../services/paymentLog.service");
 // GET /api/download/:token
 // Validates the token is unexpired and unused, then redirects to a
 // short-lived signed R2 URL. Marks the token used so it can't be replayed.
 async function downloadByToken(req, res) {
     const { token } = req.params;
-    const client = await db_1.default.connect();
+    const client = await db_saas_1.default.connect();
     try {
         await client.query('BEGIN');
         const { rows } = await client.query(`SELECT p.id, p.phone_number, p.token_expires_at, p.token_used, pa.file_key
@@ -60,7 +60,7 @@ async function downloadByToken(req, res) {
             eventType: 'download_attempt',
             payload: { token, result: 'success' },
         });
-        const url = await (0, storage_service_1.getSignedDownloadUrl)(purchase.file_key, 120);
+        const url = await (0, saas_storage_1.getSignedDownloadUrl)(purchase.file_key, 120);
         res.redirect(url);
     }
     catch (err) {

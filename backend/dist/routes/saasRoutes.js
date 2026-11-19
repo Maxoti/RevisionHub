@@ -277,6 +277,73 @@ function createSaasRouter(pool) {
             res.status(500).json({ error: "Failed to delete paper." });
         }
     });
+    // Edit a paper's details (not its file). Same auth + tenant scoping as delete.
+    router.patch("/tenants/papers/:paperId", ...seller, (0, tenantAuth_1.requireRole)("owner", "admin"), async (req, res) => {
+        try {
+            const t = tenantOf(res);
+            const paperId = toId(req.params.paperId);
+            if (!paperId)
+                return res.status(400).json({ error: "Invalid paper id." });
+            const b = req.body ?? {};
+            const clean = (v) => String(v ?? "").trim();
+            const sets = [];
+            const vals = [];
+            const add = (col, v) => {
+                vals.push(v);
+                sets.push(`${col} = $${vals.length}`);
+            };
+            if (b.title !== undefined) {
+                const title = clean(b.title);
+                if (!title || title.length > 200) {
+                    return res.status(400).json({ error: "Title is required (max 200 characters)." });
+                }
+                add("title", title);
+            }
+            if (b.price !== undefined) {
+                const price = Number(b.price);
+                if (!Number.isInteger(price) || price < 1 || price > 150000) {
+                    return res.status(400).json({ error: "Price must be between KES 1 and 150,000." });
+                }
+                add("price", price);
+            }
+            if (b.year !== undefined && b.year !== null && b.year !== "") {
+                const year = Number(b.year);
+                if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+                    return res.status(400).json({ error: "Enter a valid year." });
+                }
+                add("year", year);
+            }
+            // Text fields: update only when a value is sent. Empty means "leave as is".
+            const textFields = [
+                ["subject", b.subject, 100],
+                ["grade", b.grade, 60],
+                ["exam_type", b.examType, 80],
+                ["term", b.term, 20],
+            ];
+            for (const [col, raw, max] of textFields) {
+                const v = clean(raw);
+                if (!v)
+                    continue;
+                if (v.length > max) {
+                    return res.status(400).json({ error: `${col} is too long.` });
+                }
+                add(col, v);
+            }
+            if (!sets.length)
+                return res.status(400).json({ error: "Nothing to update." });
+            vals.push(paperId, t.id);
+            const r = await (0, tenantDb_1.withTenant)(pool, t.id, (c) => c.query(`UPDATE public.papers SET ${sets.join(", ")}
+              WHERE id = $${vals.length - 1} AND tenant_id = $${vals.length} AND active = true
+              RETURNING id, title, subject, grade, exam_type, term, year, price`, vals));
+            if (!r.rowCount)
+                return res.status(404).json({ error: "Paper not found." });
+            res.json({ message: "Paper updated.", paper: r.rows[0] });
+        }
+        catch (err) {
+            console.error("[tenants/papers/patch]", err.message);
+            res.status(500).json({ error: "Failed to update paper." });
+        }
+    });
     // ===================================================================
     // 2. MONTHLY RENEWAL STK PUSH (KES 300 via Platform Buy Goods Till)
     // ===================================================================
