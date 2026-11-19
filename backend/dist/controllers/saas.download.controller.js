@@ -6,14 +6,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.downloadByToken = downloadByToken;
 const db_saas_1 = __importDefault(require("../config/db.saas"));
 const storage_service_1 = require("../services/storage.service");
-const paymentLog_service_1 = require("../services/paymentLog.service");
+const saas_paymentLog_service_1 = require("../services/saas.paymentLog.service");
 const tenantDb_1 = require("../utils/tenantDb");
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---------------------------------------------------------------------------
 // ASSUMPTIONS TO VERIFY
 //   purchases.tenant_id and papers.tenant_id exist
 //   withTenant(pool, tenantId, (client) => client.query(...)) returns the
 //   callback's result, as used in saasRoutes.ts
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ---------------------------------------------------------------------------
 // Never write a live bearer token into the payment log; a short prefix is
 // enough to correlate attempts.
 function tokenRef(token) {
@@ -34,21 +34,26 @@ async function downloadByToken(req, res) {
         res.status(400).json({ error: 'Invalid request' });
         return;
     }
+    // Declared outside try so the catch block can log against the tenant.
+    let tenantId;
     try {
         const tr = await db_saas_1.default.query(`SELECT id FROM public.tenants WHERE slug = $1`, [slug]);
-        const tenantId = tr.rows[0]?.id;
+        tenantId = tr.rows[0]?.id;
+        // Unknown slug: no tenant to attach a log row to (tenant_id is NOT NULL).
         if (!tenantId) {
             res.status(404).json({ error: 'Invalid or unrecognised link' });
             return;
         }
-        const found = await (0, tenantDb_1.withTenant)(db_saas_1.default, tenantId, (c) => c.query(`SELECT p.id, p.phone_number, p.token_expires_at, p.token_used, pa.file_key
+        const tid = tenantId;
+        const found = await (0, tenantDb_1.withTenant)(db_saas_1.default, tid, (c) => c.query(`SELECT p.id, p.phone_number, p.token_expires_at, p.token_used, pa.file_key
          FROM purchases p
          JOIN papers pa ON pa.id = p.paper_id AND pa.tenant_id = p.tenant_id
          WHERE p.download_token = $1
            AND p.status = 'completed'
-           AND p.tenant_id = $2`, [token, tenantId]));
+           AND p.tenant_id = $2`, [token, tid]));
         if (found.rows.length === 0) {
-            await (0, paymentLog_service_1.logPaymentEvent)({
+            await (0, saas_paymentLog_service_1.logPaymentEvent)({
+                tenantId: tid,
                 eventType: 'download_attempt',
                 payload: { token: tokenRef(token), slug, result: 'not_found' },
             });
@@ -57,7 +62,8 @@ async function downloadByToken(req, res) {
         }
         const purchase = found.rows[0];
         if (purchase.token_used) {
-            await (0, paymentLog_service_1.logPaymentEvent)({
+            await (0, saas_paymentLog_service_1.logPaymentEvent)({
+                tenantId: tid,
                 purchaseId: purchase.id,
                 phoneNumber: purchase.phone_number,
                 eventType: 'download_attempt',
@@ -67,7 +73,8 @@ async function downloadByToken(req, res) {
             return;
         }
         if (new Date() > new Date(purchase.token_expires_at)) {
-            await (0, paymentLog_service_1.logPaymentEvent)({
+            await (0, saas_paymentLog_service_1.logPaymentEvent)({
+                tenantId: tid,
                 purchaseId: purchase.id,
                 phoneNumber: purchase.phone_number,
                 eventType: 'download_attempt',
@@ -81,14 +88,15 @@ async function downloadByToken(req, res) {
         const url = await (0, storage_service_1.getSignedDownloadUrl)(purchase.file_key, 120);
         // Atomic claim: only one request can flip token_used, even if two arrive
         // at once. COALESCE covers a NULL token_used on older rows.
-        const claim = await (0, tenantDb_1.withTenant)(db_saas_1.default, tenantId, (c) => c.query(`UPDATE purchases
+        const claim = await (0, tenantDb_1.withTenant)(db_saas_1.default, tid, (c) => c.query(`UPDATE purchases
          SET token_used = TRUE, updated_at = NOW()
          WHERE id = $1 AND tenant_id = $2
            AND COALESCE(token_used, FALSE) = FALSE
            AND token_expires_at > NOW()
-         RETURNING id`, [purchase.id, tenantId]));
+         RETURNING id`, [purchase.id, tid]));
         if (!claim.rowCount) {
-            await (0, paymentLog_service_1.logPaymentEvent)({
+            await (0, saas_paymentLog_service_1.logPaymentEvent)({
+                tenantId: tid,
                 purchaseId: purchase.id,
                 phoneNumber: purchase.phone_number,
                 eventType: 'download_attempt',
@@ -97,7 +105,8 @@ async function downloadByToken(req, res) {
             res.status(410).json({ error: 'This download link has already been used' });
             return;
         }
-        await (0, paymentLog_service_1.logPaymentEvent)({
+        await (0, saas_paymentLog_service_1.logPaymentEvent)({
+            tenantId: tid,
             purchaseId: purchase.id,
             phoneNumber: purchase.phone_number,
             eventType: 'download_attempt',
@@ -107,10 +116,16 @@ async function downloadByToken(req, res) {
     }
     catch (err) {
         console.error('[saasDownload] error:', err);
-        await (0, paymentLog_service_1.logPaymentEvent)({
-            eventType: 'download_error',
-            payload: { token: tokenRef(token), error: err instanceof Error ? err.message : String(err) },
-        }).catch(() => undefined);
+        if (tenantId) {
+            await (0, saas_paymentLog_service_1.logPaymentEvent)({
+                tenantId,
+                eventType: 'download_error',
+                payload: {
+                    token: tokenRef(token),
+                    error: err instanceof Error ? err.message : String(err),
+                },
+            }).catch(() => undefined);
+        }
         res.status(500).json({ error: 'Something went wrong' });
     }
 }
