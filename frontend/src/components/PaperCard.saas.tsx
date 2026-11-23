@@ -7,10 +7,10 @@ interface Props {
 }
 
 /**
- * Document icon with a label on it ("PDF", or "ZIP" for full sets).
+ * Document icon with a label on it: red for PDF, amber for ZIP (full sets).
  * Inline SVG, so there is no image file to host or cache.
  */
-function FileIcon({ label }: { label: string }) {
+function FileIcon({ label, color }: { label: string; color: string }) {
   return (
     <svg
       viewBox="0 0 40 48"
@@ -20,9 +20,9 @@ function FileIcon({ label }: { label: string }) {
     >
       <path
         d="M6 1h19l13 13v29a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V5a4 4 0 0 1 4-4z"
-        fill="#3B82F6"
+        fill={color}
       />
-      <path d="M25 1v9a4 4 0 0 0 4 4h9z" fill="#BFDBFE" />
+      <path d="M25 1v9a4 4 0 0 0 4 4h9z" fill="#FFFFFF" fillOpacity="0.85" />
       <text
         x="20"
         y="38"
@@ -63,7 +63,10 @@ export default function PaperCard({ paper, onSelect }: Props) {
 
       {/* File icon + title + details */}
       <div className="mt-3 flex items-start gap-3">
-        <FileIcon label={paper.is_bundle ? 'ZIP' : 'PDF'} />
+        <FileIcon
+          label={paper.is_bundle ? 'ZIP' : 'PDF'}
+          color={paper.is_bundle ? '#F59E0B' : '#E5322D'}
+        />
         <div className="min-w-0">
           <h3 className="line-clamp-3 text-base font-bold leading-snug text-[#0B2A7A]">
             {paper.title}
