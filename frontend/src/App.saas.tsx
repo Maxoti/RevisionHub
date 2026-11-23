@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Paper } from './types';
-import PaperCard from './components/PaperCard';
+import PaperCard from './components/PaperCard.saas';
 import SaasBuyModal from './components/SaasBuyModal';
 // ---------------------------------------------------------------------------
 // SaaS storefront (e.g. edusynchub.co.ke/jane).
@@ -221,13 +221,36 @@ export default function AppSaas() {
         </p>
       </header>
 
-      {/* Payments not ready */}
-      {!purchasable && loadState !== 'loading' && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 text-center text-sm text-amber-800">
-          Purchases opening soon. You can browse papers now.
-        </div>
-      )}
-
+     {/* Payments not ready */}
+     {/* Payments not ready */}
+{!purchasable && loadState === 'ready' && papers.length > 0 && (
+  <div className="border-b border-blue-200 bg-blue-100 px-4 py-4">
+    <div className="mx-auto flex max-w-6xl items-center gap-4">
+      <svg
+        viewBox="0 0 28 24"
+        className="h-9 w-10 shrink-0 text-orange-500"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="m3 11 18-5v12L3 14v-3z" fill="currentColor" />
+        <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
+        <path d="M23.5 9.5a4 4 0 0 1 0 5" />
+        <path d="M26 7.5a7 7 0 0 1 0 9" />
+      </svg>
+      <span className="h-10 w-px shrink-0 bg-blue-900/50" aria-hidden="true" />
+      <p className="text-sm font-bold leading-snug text-blue-900 sm:text-base">
+        Thanks <span>{store?.name}</span> for uploading your first paper. For
+        purchases in your store, please contact the system admin for M-Pesa
+        integration.
+      </p>
+    </div>
+  </div>
+)}
+   
       {/* Filters */}
       <div className="bg-white border-b border-gray-200 px-4 py-3">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
