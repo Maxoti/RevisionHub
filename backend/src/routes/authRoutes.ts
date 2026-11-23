@@ -3,12 +3,12 @@ import bcrypt from "bcryptjs";
 import { Pool } from "pg";
 import { formatPhone } from "../services/mpesa.service";
 import { TENANT_MODE, signToken, requireAuth } from "../middleware/tenantAuth";
-
-// Slugs that would collide with frontend routes or look official
+// Slugs that would collide with frontend routes, static pages or look official
 const RESERVED_SLUGS = new Set([
   "admin", "api", "app", "www", "signin", "signup", "login", "logout",
   "register", "upload", "dashboard", "saas", "static", "assets", "images",
   "default", "support", "help", "billing", "pricing", "about", "contact",
+  "vault", "saas-upload", "payment-history", "index", "robots", "favicon",
 ]);
 
 // Must match the curriculum values used by SignUpPage, the upload form and
