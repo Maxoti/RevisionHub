@@ -132,7 +132,11 @@ function createSaasRouter(pool) {
         try {
             const slug = str(req.params.slug).toLowerCase().slice(0, 60);
             const tr = await pool.query(`SELECT id, store_name, slug, setup_fee_paid, mpesa_status, status,
-      whatsapp_number, phone_number
+              whatsapp_number, phone_number,
+              (till_number IS NOT NULL AND store_number IS NOT NULL
+               AND encrypted_consumer_key IS NOT NULL
+               AND encrypted_consumer_secret IS NOT NULL
+               AND encrypted_passkey IS NOT NULL) AS has_mpesa
          FROM public.tenants WHERE slug = $1`, [slug]);
             const t = tr.rows[0];
             if (!t || t.status === "suspended") {
@@ -162,13 +166,14 @@ function createSaasRouter(pool) {
           ORDER BY created_at DESC
           LIMIT 500`, args));
             const wa = (0, mpesa_service_1.formatPhone)(String(t.whatsapp_number || t.phone_number || ""));
+            res.set("Cache-Control", "no-store");
             res.json({
                 store: {
                     name: t.store_name,
                     slug: t.slug,
                     whatsapp: /^254\d{9}$/.test(wa) ? wa : null,
                 },
-                purchasable: t.setup_fee_paid === true && t.mpesa_status === "active",
+                purchasable: t.setup_fee_paid === true && t.mpesa_status === "active" && t.has_mpesa === true,
                 papers: papers.rows,
             });
         }

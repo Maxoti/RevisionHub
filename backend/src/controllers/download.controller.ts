@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
-import pool from '../config/db';
-import { getSignedDownloadUrl } from '../services/storage.service';
+import pool from '../config/db.saas';
+
+import { getSignedDownloadUrl } from '../services/saas.storage';
 import { logPaymentEvent } from '../services/paymentLog.service';
 
 // GET /api/download/:token

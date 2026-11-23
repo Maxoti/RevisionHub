@@ -8,11 +8,12 @@ const express_1 = require("express");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const mpesa_service_1 = require("../services/mpesa.service");
 const tenantAuth_1 = require("../middleware/tenantAuth");
-// Slugs that would collide with frontend routes or look official
+// Slugs that would collide with frontend routes, static pages or look official
 const RESERVED_SLUGS = new Set([
     "admin", "api", "app", "www", "signin", "signup", "login", "logout",
     "register", "upload", "dashboard", "saas", "static", "assets", "images",
     "default", "support", "help", "billing", "pricing", "about", "contact",
+    "vault", "saas-upload", "payment-history", "index", "robots", "favicon",
 ]);
 // Must match the curriculum values used by SignUpPage, the upload form and
 // the storefront filters.

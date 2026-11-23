@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import pool from '../config/db';
-
 // GET /api/admin/payment-history?phone=0729871381
 // GET /api/admin/payment-history?checkout_request_id=ws_CO_...
 export async function getPaymentHistory(req: Request, res: Response): Promise<void> {
