@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
+import { BarChart3, BookOpen, Calendar, FileText, List } from 'lucide-react';
 import type { Paper } from './types';
 import PaperCard from './components/PaperCard.saas';
+import FilterSelect from './components/FilterSelect';
+import type { FilterOption } from './components/FilterSelect';
 import SaasBuyModal from './components/SaasBuyModal';
 // ---------------------------------------------------------------------------
 // SaaS storefront (e.g. edusynchub.co.ke/jane).
@@ -90,6 +93,9 @@ function termsFor(curriculum: string): [string, string][] {
   return STANDARD_TERMS;
 }
 
+const toOptions = (list: string[]): FilterOption[] =>
+  list.map((v) => ({ value: v, label: v }));
+
 interface Filters {
   curriculum: string;
   grade: string;
@@ -107,8 +113,8 @@ interface StoreInfo {
 
 type LoadState = 'loading' | 'ready' | 'error' | 'empty' | 'notfound';
 
-const SELECT_CLASS =
-  'border border-gray-200 bg-white rounded-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1A56DB]';
+// Page background: soft white-blue
+const PAGE_BG = 'bg-gradient-to-b from-[#E6EFFF] via-[#EEF4FF] to-[#F7FAFF]';
 
 export default function AppSaas() {
   const [papers, setPapers]               = useState<Paper[]>([]);
@@ -185,13 +191,14 @@ export default function AppSaas() {
 
   const gradeOptions = GRADES_BY_CURRICULUM[filters.curriculum] ?? ALL_GRADES;
   const storeName = store?.name ?? '';
+  const hasFilters = Object.values(filters).some(Boolean);
 
   if (loadState === 'notfound') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-6 text-center">
+      <div className={`flex min-h-screen items-center justify-center px-6 text-center ${PAGE_BG}`}>
         <div>
-          <h1 className="font-display text-2xl font-bold text-gray-800">Store not found</h1>
-          <p className="text-gray-500 mt-2 text-sm">
+          <h1 className="font-display text-2xl font-bold text-[#0B2A7A]">Store not found</h1>
+          <p className="mt-2 text-sm text-[#0B2A7A]/70">
             Check the link you were given and try again.
           </p>
         </div>
@@ -200,8 +207,8 @@ export default function AppSaas() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
+    <div className={`flex min-h-screen flex-col ${PAGE_BG}`}>
+      {/* Header (store name comes from the slug) */}
       <header className="bg-[#1A56DB] text-white py-10 px-6 text-center">
         <div className="inline-flex items-center gap-2 mb-3">
           <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center">
@@ -221,99 +228,86 @@ export default function AppSaas() {
         </p>
       </header>
 
-     {/* Payments not ready */}
-     {/* Payments not ready */}
-{!purchasable && loadState === 'ready' && papers.length > 0 && (
-  <div className="border-b border-blue-200 bg-blue-100 px-4 py-4">
-    <div className="mx-auto flex max-w-6xl items-center gap-4">
-      <svg
-        viewBox="0 0 28 24"
-        className="h-9 w-10 shrink-0 text-orange-500"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="m3 11 18-5v12L3 14v-3z" fill="currentColor" />
-        <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
-        <path d="M23.5 9.5a4 4 0 0 1 0 5" />
-        <path d="M26 7.5a7 7 0 0 1 0 9" />
-      </svg>
-      <span className="h-10 w-px shrink-0 bg-blue-900/50" aria-hidden="true" />
-      <p className="text-sm font-bold leading-snug text-blue-900 sm:text-base">
-        Thanks <span>{store?.name}</span> for uploading your first paper. For
-        purchases in your store, please contact the system admin for M-Pesa
-        integration.
-      </p>
-    </div>
-  </div>
-)}
-   
+      {/* Payments not ready */}
+      {!purchasable && loadState === 'ready' && papers.length > 0 && (
+        <div className="border-b border-blue-200 bg-blue-100 px-4 py-4">
+          <div className="mx-auto flex max-w-6xl items-center gap-4">
+            <svg
+              viewBox="0 0 28 24"
+              className="h-9 w-10 shrink-0 text-orange-500"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="m3 11 18-5v12L3 14v-3z" fill="currentColor" />
+              <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
+              <path d="M23.5 9.5a4 4 0 0 1 0 5" />
+              <path d="M26 7.5a7 7 0 0 1 0 9" />
+            </svg>
+            <span className="h-10 w-px shrink-0 bg-blue-900/50" aria-hidden="true" />
+            <p className="text-sm font-bold leading-snug text-blue-900 sm:text-base">
+              Thanks <span>{store?.name}</span> for uploading your first paper. For
+              purchases in your store, please contact the system admin for M-Pesa
+              integration.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <select
+      <div className="mx-auto w-full max-w-7xl px-4 pt-6 sm:px-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <FilterSelect
+            label="Curriculum"
+            allLabel="All Curricula"
+            Icon={BookOpen}
             value={filters.curriculum}
-            onChange={(e) => setFilter('curriculum', e.target.value)}
-            className={SELECT_CLASS}
-            aria-label="Curriculum"
-          >
-            <option value="">All Curricula</option>
-            {CURRICULA.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
-
-          <select
+            onChange={(v: string) => setFilter('curriculum', v)}
+            options={CURRICULA}
+          />
+          <FilterSelect
+            label={filters.curriculum === 'Cambridge' ? 'Year' : 'Grade'}
+            allLabel={filters.curriculum === 'Cambridge' ? 'All Years / Classes' : 'All Grades'}
+            Icon={BarChart3}
             value={filters.grade}
-            onChange={(e) => setFilter('grade', e.target.value)}
-            className={SELECT_CLASS}
-            aria-label={filters.curriculum === 'Cambridge' ? 'Year' : 'Grade'}
-          >
-            <option value="">{filters.curriculum === 'Cambridge' ? 'All Years / Classes' : 'All Grades'}</option>
-            {gradeOptions.map((g) => <option key={g} value={g}>{g}</option>)}
-          </select>
-
-          <select
+            onChange={(v: string) => setFilter('grade', v)}
+            options={toOptions(gradeOptions)}
+          />
+          <FilterSelect
+            label="Type"
+            allLabel="All Types"
+            Icon={List}
             value={filters.exam_type}
-            onChange={(e) => setFilter('exam_type', e.target.value)}
-            className={SELECT_CLASS}
-            aria-label="Type"
-          >
-            <option value="">All Types</option>
-            {typesFor(filters.curriculum).map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
-
-          <select
+            onChange={(v: string) => setFilter('exam_type', v)}
+            options={toOptions(typesFor(filters.curriculum))}
+          />
+          <FilterSelect
+            label="Term"
+            allLabel="All Terms"
+            Icon={FileText}
             value={filters.term}
-            onChange={(e) => setFilter('term', e.target.value)}
-            className={SELECT_CLASS}
-            aria-label="Term"
-          >
-            <option value="">All Terms</option>
-            {termsFor(filters.curriculum).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-
-          <select
+            onChange={(v: string) => setFilter('term', v)}
+            options={termsFor(filters.curriculum).map(([value, label]) => ({ value, label }))}
+          />
+          <FilterSelect
+            label="Year"
+            allLabel="All Years"
+            Icon={Calendar}
             value={filters.year}
-            onChange={(e) => setFilter('year', e.target.value)}
-            className={SELECT_CLASS}
-            aria-label="Year"
-          >
-            <option value="">All Years</option>
-            {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
-          </select>
+            onChange={(v: string) => setFilter('year', v)}
+            options={toOptions(YEARS)}
+          />
         </div>
 
-        {Object.values(filters).some(Boolean) && (
+        {hasFilters && (
           <div className="mt-2 text-right">
             <button
+              type="button"
               onClick={() => setFilters(DEFAULT_FILTERS)}
-              className="text-xs text-gray-400 hover:text-gray-600 underline"
+              className="text-xs font-medium text-[#0B2A7A]/70 underline hover:text-[#0B2A7A]"
             >
               Clear filters
             </button>
@@ -322,30 +316,35 @@ export default function AppSaas() {
       </div>
 
       {/* Paper grid */}
-      <main className="px-4 py-6 flex-1">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
         {loadState === 'loading' && (
-          <p className="text-center text-gray-400">Loading papers…</p>
+          <p className="text-center text-[#0B2A7A]/60">Loading papers…</p>
         )}
         {loadState === 'error' && (
-          <p className="text-center text-red-500">
+          <p className="text-center text-red-600">
             Could not load papers. Refresh to try again.
           </p>
         )}
         {loadState === 'empty' && (
-          <p className="text-center text-gray-400">
+          <p className="text-center text-[#0B2A7A]/60">
             No papers found for the selected filters.
           </p>
         )}
         {loadState === 'ready' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {papers.map((paper) => (
-              <PaperCard key={paper.id} paper={paper} onSelect={handleSelect} />
-            ))}
-          </div>
+          <>
+            <p className="mb-4 text-sm font-medium text-[#0B2A7A]/70" aria-live="polite">
+              {papers.length} {papers.length === 1 ? 'paper' : 'papers'}
+            </p>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {papers.map((paper) => (
+                <PaperCard key={paper.id} paper={paper} onSelect={handleSelect} />
+              ))}
+            </div>
+          </>
         )}
       </main>
 
-         {selectedPaper && (
+      {selectedPaper && (
         <SaasBuyModal
           paper={selectedPaper}
           slug={slug}
