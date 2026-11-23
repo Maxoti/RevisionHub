@@ -1,3 +1,4 @@
+import { ShoppingCart } from 'lucide-react';
 import type { Paper } from '../types';
 
 interface Props {
@@ -5,66 +6,84 @@ interface Props {
   onSelect: (paper: Paper) => void;
 }
 
+/**
+ * Document icon with a label on it ("PDF", or "ZIP" for full sets).
+ * Inline SVG, so there is no image file to host or cache.
+ */
+function FileIcon({ label }: { label: string }) {
+  return (
+    <svg
+      viewBox="0 0 40 48"
+      className="h-12 w-10 shrink-0"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M6 1h19l13 13v29a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V5a4 4 0 0 1 4-4z"
+        fill="#3B82F6"
+      />
+      <path d="M25 1v9a4 4 0 0 0 4 4h9z" fill="#BFDBFE" />
+      <text
+        x="20"
+        y="38"
+        textAnchor="middle"
+        fontSize="11"
+        fontWeight="700"
+        fill="#FFFFFF"
+        fontFamily="Arial, Helvetica, sans-serif"
+      >
+        {label}
+      </text>
+    </svg>
+  );
+}
+
 // SaaS-only copy of PaperCard. The single-tenant PaperCard.tsx is left untouched.
 export default function PaperCard({ paper, onSelect }: Props) {
-  const meta = [paper.curriculum, paper.year].join(' · ');
+  const meta = [paper.curriculum, paper.year].filter(Boolean).join(' · ');
   const termLabel = /^\d+$/.test(String(paper.term)) ? `Term ${paper.term}` : paper.term;
+  const details = [paper.exam_type, termLabel, paper.subject].filter(Boolean).join(' • ');
 
   return (
-    <div className="group relative border rounded-sm shadow-sm hover:shadow-md transition-shadow pt-5 bg-white border-gray-200">
-
-      {/* Full Set badge */}
-      {paper.is_bundle && (
-        <div className="absolute top-3 left-3 bg-[#1A56DB] text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded-sm tracking-wide">
-          FULL SET
-        </div>
-      )}
-
-      {/* Price stamp */}
-      <div className="absolute top-3 right-3 bg-stamp text-white font-mono text-xs font-bold px-2 py-1 rounded-sm shadow-sm">
+    <article className="relative rounded-2xl bg-white p-5 shadow-[0_4px_16px_rgba(11,42,122,0.08)] ring-1 ring-[#0B2A7A]/5 transition-shadow hover:shadow-[0_8px_24px_rgba(11,42,122,0.16)]">
+      {/* Price pill */}
+      <span className="absolute right-4 top-4 rounded-full bg-[#19C45F] px-3 py-1 text-sm font-bold text-white shadow-sm">
         KES {paper.price}
+      </span>
+
+      {/* Full-set badge + curriculum and year (leaves room for the price pill) */}
+      <div className="flex min-h-[28px] items-center gap-2 pr-24">
+        {paper.is_bundle && (
+          <span className="rounded-full bg-[#1A56DB] px-2 py-0.5 text-[10px] font-bold tracking-wide text-white">
+            FULL SET
+          </span>
+        )}
+        {meta && <p className="text-sm font-semibold text-[#0B2A7A]">{meta}</p>}
       </div>
 
-      <div className="p-5 pt-8">
-        {/* Curriculum + year */}
-        <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400 mb-2">
-          {meta}
-        </p>
-
-        {/* Title */}
-        <h3 className="font-display text-base font-semibold text-chalkboard leading-snug mb-1">
-          {paper.title}
-        </h3>
-
-        {/* Exam type + term + subject */}
-        <p className="text-xs text-gray-400 mb-4">
-          {paper.exam_type} · {termLabel}
-          {paper.subject && <> · {paper.subject}</>}
-        </p>
-
-        <div className="rule-underline w-full mb-4" />
-
-        <button
-          onClick={() => onSelect(paper)}
-          className="inline-flex w-full items-center justify-center gap-2 font-semibold text-sm py-3 rounded-full transition-all shadow-md hover:shadow-lg hover:scale-[1.02] bg-[#1A56DB] hover:bg-[#1A56DB]/90 text-white"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            className="h-5 w-5 shrink-0"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <circle cx="8" cy="21" r="1" />
-            <circle cx="19" cy="21" r="1" />
-            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-          </svg>
-          {paper.is_bundle ? 'Buy Full Set' : 'Buy & Download'}
-        </button>
+      {/* File icon + title + details */}
+      <div className="mt-3 flex items-start gap-3">
+        <FileIcon label={paper.is_bundle ? 'ZIP' : 'PDF'} />
+        <div className="min-w-0">
+          <h3 className="line-clamp-3 text-base font-bold leading-snug text-[#0B2A7A]">
+            {paper.title}
+          </h3>
+          {details && (
+            <p className="mt-1.5 text-xs leading-relaxed text-[#0B2A7A]/70">{details}</p>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Buy button */}
+      <button
+        type="button"
+        onClick={() => onSelect(paper)}
+        aria-label={`${paper.is_bundle ? 'Buy full set' : 'Buy and download'}: ${paper.title}`}
+        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#1A56DB] py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#1543ad] hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A56DB]/50 focus-visible:ring-offset-2"
+      >
+        <ShoppingCart className="h-5 w-5 shrink-0" aria-hidden="true" />
+        {paper.is_bundle ? 'Buy Full Set' : 'Buy & Download'}
+      </button>
+    </article>
   );
 }
