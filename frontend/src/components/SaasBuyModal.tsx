@@ -140,18 +140,18 @@ export default function SaasBuyModal({ paper, slug, whatsappNumber, onClose }: P
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B1F5C]/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B1F5C]/60 p-3 backdrop-blur-sm sm:p-4"
       onClick={onClose}
     >
       <div
-        className="relative max-h-[95vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"
+        className="relative max-h-[95vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-6"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label="Order"
       >
         {/* Top row: ORDER tag + close */}
-        <div className="mb-4 flex items-start justify-between">
+        <div className="mb-3 flex items-start justify-between sm:mb-4">
           <span className="inline-flex items-center gap-2 rounded-lg bg-blue-100 px-3 py-1.5 text-sm font-bold uppercase tracking-wide text-blue-700">
             <ShoppingCart className="h-5 w-5" aria-hidden="true" />
             Order
@@ -165,8 +165,8 @@ export default function SaasBuyModal({ paper, slug, whatsappNumber, onClose }: P
           </button>
         </div>
 
-        <h2 className="mb-3 text-2xl font-extrabold leading-tight text-[#0B2A7A]">{paper.title}</h2>
-        <p className="mb-5 inline-block rounded-lg bg-gradient-to-b from-green-500 to-green-600 px-4 py-1.5 text-2xl font-extrabold text-white shadow-sm">
+        <h2 className="mb-2 text-xl font-extrabold leading-tight text-[#0B2A7A] sm:mb-3 sm:text-2xl">{paper.title}</h2>
+        <p className="mb-4 inline-block rounded-lg bg-gradient-to-b from-green-500 to-green-600 px-3 py-1 text-xl font-extrabold text-white shadow-sm sm:mb-5 sm:px-4 sm:py-1.5 sm:text-2xl">
           KES {paper.price}
         </p>
 
@@ -174,14 +174,14 @@ export default function SaasBuyModal({ paper, slug, whatsappNumber, onClose }: P
           <div>
             <label
               htmlFor="saas-buy-phone"
-              className="mb-1.5 flex items-center gap-2 text-base font-semibold text-[#0B2A7A]"
+              className="mb-1 flex items-center gap-2 text-sm font-semibold text-[#0B2A7A] sm:mb-1.5 sm:text-base"
             >
               <Phone className="h-5 w-5 text-blue-700" aria-hidden="true" />
               <span>
                 M-Pesa phone number <span className="text-red-500">*</span>
               </span>
             </label>
-            <div className="relative mb-4">
+            <div className="relative mb-3 sm:mb-4">
               <Phone
                 className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
                 aria-hidden="true"
@@ -192,20 +192,20 @@ export default function SaasBuyModal({ paper, slug, whatsappNumber, onClose }: P
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="07XXXXXXXX"
-                className="w-full rounded-xl border border-slate-300 py-3 pl-11 pr-3 text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full rounded-xl border border-slate-300 py-2.5 pl-11 pr-3 text-base sm:py-3 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
               />
             </div>
 
             <label
               htmlFor="saas-buy-email"
-              className="mb-1.5 flex items-center gap-2 text-base font-semibold text-[#0B2A7A]"
+              className="mb-1 flex items-center gap-2 text-sm font-semibold text-[#0B2A7A] sm:mb-1.5 sm:text-base"
             >
               <Mail className="h-5 w-5 text-blue-700" aria-hidden="true" />
               <span>
                 Email <span className="font-normal text-slate-500">(optional)</span>
               </span>
             </label>
-            <div className="relative mb-5">
+            <div className="relative mb-4 sm:mb-5">
               <Mail
                 className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
                 aria-hidden="true"
@@ -216,14 +216,14 @@ export default function SaasBuyModal({ paper, slug, whatsappNumber, onClose }: P
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-xl border border-slate-300 py-3 pl-11 pr-3 text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full rounded-xl border border-slate-300 py-2.5 pl-11 pr-3 text-base sm:py-3 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
               />
             </div>
 
             <button
               onClick={startPurchase}
               disabled={loading}
-              className="flex w-full items-center rounded-full bg-gradient-to-b from-[#1747E0] to-[#0B34B8] px-5 py-3.5 text-white shadow-md transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 sm:px-6"
+              className="flex w-full items-center rounded-full bg-gradient-to-b from-[#1747E0] to-[#0B34B8] px-5 py-3 sm:py-3.5 text-white shadow-md transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 sm:px-6"
             >
               <span className="w-[4.5rem] whitespace-nowrap text-left text-base font-extrabold tracking-tight sm:w-24 sm:text-lg">M-PESA</span>
               <span className="mx-3 h-8 w-px bg-white/40" aria-hidden="true" />
@@ -235,7 +235,7 @@ export default function SaasBuyModal({ paper, slug, whatsappNumber, onClose }: P
 
             {whatsappNumber && (
               <>
-                <div className="my-4 flex items-center gap-4 text-sm text-slate-500">
+                <div className="my-3 flex items-center gap-4 text-sm text-slate-500 sm:my-4">
                   <span className="h-px flex-1 bg-slate-200" />
                   or
                   <span className="h-px flex-1 bg-slate-200" />
@@ -244,7 +244,7 @@ export default function SaasBuyModal({ paper, slug, whatsappNumber, onClose }: P
                   href={buildWhatsAppLink()}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex w-full items-center rounded-full bg-gradient-to-b from-green-500 to-green-600 px-5 py-3.5 text-white shadow-md transition hover:brightness-110 sm:px-6"
+                  className="flex w-full items-center rounded-full bg-gradient-to-b from-green-500 to-green-600 px-5 py-3 sm:py-3.5 text-white shadow-md transition hover:brightness-110 sm:px-6"
                 >
                   <WhatsAppIcon className="h-8 w-10 shrink-0 sm:w-24 sm:pr-12" />
                   <span className="mx-2 h-8 w-px bg-white/40 sm:mx-3" aria-hidden="true" />
@@ -254,7 +254,7 @@ export default function SaasBuyModal({ paper, slug, whatsappNumber, onClose }: P
               </>
             )}
 
-            <div className="mt-5 flex items-center justify-center gap-2 rounded-lg bg-blue-50 px-4 py-3 text-sm font-medium text-blue-900">
+            <div className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-xs font-medium text-blue-900 sm:mt-5 sm:px-4 sm:py-3 sm:text-sm">
               <ShieldCheck className="h-5 w-5 shrink-0 text-blue-700" aria-hidden="true" />
               Your payment is secure and processed instantly.
             </div>
