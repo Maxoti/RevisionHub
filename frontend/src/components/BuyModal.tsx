@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   AlertCircle,
   CheckCircle2,
@@ -153,7 +153,7 @@ export default function BuyModalV2({ paper, onClose }: Props) {
   const details = [paper.exam_type, termLabel, paper.subject].filter(Boolean).join(' • ');
 
   const inputClass =
-    'w-full rounded-xl border border-[#0B2A7A]/15 bg-white py-3 pl-10 pr-3 text-sm text-[#0B2A7A] placeholder:text-[#0B2A7A]/40 focus:border-[#1A56DB] focus:outline-none focus:ring-2 focus:ring-[#1A56DB]/25';
+    'w-full rounded-xl border border-[#0B2A7A]/15 bg-white py-2.5 pl-10 pr-3 text-sm text-[#0B2A7A] placeholder:text-[#0B2A7A]/40 focus:border-[#1A56DB] focus:outline-none focus:ring-2 focus:ring-[#1A56DB]/25';
   const labelClass = 'mb-1.5 flex items-center gap-2 text-sm font-bold text-[#0B2A7A]';
 
   return (
@@ -165,7 +165,7 @@ export default function BuyModalV2({ paper, onClose }: Props) {
       aria-labelledby="buy-title"
     >
       <div
-        className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl md:grid md:max-w-3xl md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]"
+        className="relative max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-2xl md:grid md:max-w-3xl md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -178,19 +178,19 @@ export default function BuyModalV2({ paper, onClose }: Props) {
         </button>
 
         {/* Left: what you are buying */}
-        <aside className="flex flex-col gap-4 bg-[#F3F7FF] p-6 pr-14 md:p-8 md:pr-8">
-          <span className="inline-flex w-fit items-center gap-1.5 rounded-lg bg-[#E3ECFF] px-3 py-1.5 text-xs font-bold tracking-wide text-[#1A56DB]">
+        <aside className="flex flex-col gap-2 bg-[#F3F7FF] p-4 pr-14 md:gap-4 md:p-8 md:pr-8">
+          <span className="hidden w-fit md:inline-flex items-center gap-1.5 rounded-lg bg-[#E3ECFF] px-3 py-1.5 text-xs font-bold tracking-wide text-[#1A56DB]">
             <ShoppingCart className="h-4 w-4" aria-hidden="true" />
             ORDER
           </span>
 
-          <h2 id="buy-title" className="text-xl font-bold leading-snug text-[#0B2A7A] md:text-2xl">
+          <h2 id="buy-title" className="text-base font-bold leading-snug text-[#0B2A7A] md:text-2xl">
             {paper.title}
           </h2>
 
           {details && <p className="text-sm text-[#0B2A7A]/70">{details}</p>}
 
-          <span className="w-fit rounded-lg bg-[#19C45F] px-4 py-1.5 text-xl font-extrabold text-white shadow-sm">
+          <span className="w-fit rounded-lg bg-[#19C45F] px-3 py-1 text-base md:px-4 md:py-1.5 md:text-xl font-extrabold text-white shadow-sm">
             KES {paper.price}
           </span>
 
@@ -211,14 +211,14 @@ export default function BuyModalV2({ paper, onClose }: Props) {
         </aside>
 
         {/* Right: pay */}
-        <section className="p-6 md:flex md:flex-col md:justify-center md:p-8">
+        <section className="p-4 md:flex md:flex-col md:justify-center md:p-8">
           {step === 'choose' && (
             <div>
               <label htmlFor="buy-phone" className={labelClass}>
                 <Phone className="h-4 w-4" aria-hidden="true" />
                 M-Pesa phone number <span className="text-red-500">*</span>
               </label>
-              <div className="relative mb-4">
+              <div className="relative mb-3">
                 <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#0B2A7A]/40" aria-hidden="true" />
                 <input
                   id="buy-phone"
@@ -238,7 +238,7 @@ export default function BuyModalV2({ paper, onClose }: Props) {
                 <Mail className="h-4 w-4" aria-hidden="true" />
                 Email <span className="font-normal text-[#0B2A7A]/60">(optional)</span>
               </label>
-              <div className="relative mb-5">
+              <div className="relative mb-3">
                 <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#0B2A7A]/40" aria-hidden="true" />
                 <input
                   id="buy-email"
@@ -258,7 +258,7 @@ export default function BuyModalV2({ paper, onClose }: Props) {
               >
                 <span className="flex w-28 items-center justify-center text-sm font-extrabold tracking-wide">M-PESA</span>
                 <span className="my-3 w-px bg-white/30" aria-hidden="true" />
-                <span className="flex flex-1 items-center justify-between px-5 py-3.5 font-semibold">
+                <span className="flex flex-1 items-center justify-between px-5 py-2.5 font-semibold md:py-3.5">
                   {loading ? 'Sending prompt...' : 'Pay with M-Pesa'}
                   <ChevronRight className="h-5 w-5" aria-hidden="true" />
                 </span>
@@ -280,7 +280,7 @@ export default function BuyModalV2({ paper, onClose }: Props) {
                   <WhatsAppIcon className="h-7 w-7" />
                 </span>
                 <span className="my-3 w-px bg-white/30" aria-hidden="true" />
-                <span className="flex flex-1 items-center justify-between px-5 py-3.5 font-semibold">
+                <span className="flex flex-1 items-center justify-between px-5 py-2.5 font-semibold md:py-3.5">
                   Order via WhatsApp
                   <ChevronRight className="h-5 w-5" aria-hidden="true" />
                 </span>
