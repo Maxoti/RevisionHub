@@ -1,13 +1,33 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
 body {
   font-family: 'Work Sans', sans-serif;
   color: #211F1B;
+  width: 100%;
+  overflow-x: hidden;
 }
 
-/* Ruled-exercise-book underline used under section titles */
+/* Full-width content */
+.page-container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+/* Ruled-exercise-book underline */
 .rule-underline {
   background-image: repeating-linear-gradient(
     to right,
@@ -20,13 +40,22 @@ body {
 }
 
 @keyframes pop-in {
-  from { opacity: 0; transform: translateY(8px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
+
 .animate-pop-in {
   animation: pop-in 0.18s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-pop-in { animation: none; }
+  .animate-pop-in {
+    animation: none;
+  }
 }
