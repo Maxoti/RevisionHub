@@ -1,4 +1,15 @@
 ﻿import { useEffect, useRef, useState } from 'react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronRight,
+  Download,
+  Mail,
+  Phone,
+  ShieldCheck,
+  ShoppingCart,
+  X,
+} from 'lucide-react';
 import type { Paper } from '../types';
 import { createPurchase, getPurchaseStatus, downloadUrl } from '../api';
 
@@ -16,7 +27,15 @@ interface Props {
   onClose: () => void;
 }
 
-export default function BuyModal({ paper, onClose }: Props) {
+function WhatsAppIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12.05 21.785h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884zM20.52 3.449A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z" />
+    </svg>
+  );
+}
+
+export default function BuyModalV2({ paper, onClose }: Props) {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [step, setStep] = useState<Step>('choose');
@@ -26,6 +45,15 @@ export default function BuyModal({ paper, onClose }: Props) {
   const pollRef = useRef<number | null>(null);
 
   useEffect(() => stopPolling, []);
+
+  // Close on Escape
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
   function stopPolling() {
     if (pollRef.current !== null) {
@@ -121,99 +149,187 @@ export default function BuyModal({ paper, onClose }: Props) {
     setStep('choose');
   }
 
+  const termLabel = /^\d+$/.test(String(paper.term)) ? `Term ${paper.term}` : paper.term;
+  const details = [paper.exam_type, termLabel, paper.subject].filter(Boolean).join(' • ');
+
+  const inputClass =
+    'w-full rounded-xl border border-[#0B2A7A]/15 bg-white py-3 pl-10 pr-3 text-sm text-[#0B2A7A] placeholder:text-[#0B2A7A]/40 focus:border-[#1A56DB] focus:outline-none focus:ring-2 focus:ring-[#1A56DB]/25';
+  const labelClass = 'mb-1.5 flex items-center gap-2 text-sm font-bold text-[#0B2A7A]';
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#0B2A7A]/50 p-4 backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="buy-title"
+    >
       <div
-        className="relative bg-white rounded-sm shadow-xl max-w-sm w-full p-6"
+        className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl md:grid md:max-w-3xl md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-xl"
+          className="absolute right-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-full text-[#0B2A7A]/60 transition hover:bg-[#0B2A7A]/10 hover:text-[#0B2A7A]"
           aria-label="Close"
         >
-          &times;
+          <X className="h-5 w-5" aria-hidden="true" />
         </button>
 
-        <p className="font-mono text-[10px] uppercase tracking-wide text-gray-400 mb-1">Order</p>
-        <h2 className="text-lg font-semibold text-chalkboard leading-snug mb-1">{paper.title}</h2>
-        <p className="font-mono text-stamp font-semibold mb-4">KES {paper.price}</p>
+        {/* Left: what you are buying */}
+        <aside className="flex flex-col gap-4 bg-[#F3F7FF] p-6 pr-14 md:p-8 md:pr-8">
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-lg bg-[#E3ECFF] px-3 py-1.5 text-xs font-bold tracking-wide text-[#1A56DB]">
+            <ShoppingCart className="h-4 w-4" aria-hidden="true" />
+            ORDER
+          </span>
 
-        {step === 'choose' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              M-Pesa phone number <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="07XXXXXXXX"
-              className="w-full border border-gray-200 rounded px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-            />
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email <span className="text-gray-400 font-normal">(optional)</span>
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full border border-gray-200 rounded px-3 py-2 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-            />
-           
-            <button
-              onClick={startPurchase}
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-full mb-2 transition-all shadow-md"
-            >
-              {loading ? 'Sending prompt...' : 'Pay with M-Pesa'}
-            </button>
-            <p className="text-center text-xs text-gray-400 my-2">or</p>
-            <a
-              href={buildWhatsAppLink()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block text-center w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-full shadow-md"
-            >
-              Order via WhatsApp
-            </a>
-          </div>
-        )}
+          <h2 id="buy-title" className="text-xl font-bold leading-snug text-[#0B2A7A] md:text-2xl">
+            {paper.title}
+          </h2>
 
-        {step === 'waiting' && (
-          <div className="text-center py-4">
-            <p className="text-sm text-gray-700 mb-4">Check your phone and enter your M-Pesa PIN...</p>
-            <div className="mx-auto w-8 h-8 border-[3px] border-gray-200 border-t-blue-600 rounded-full animate-spin" />
-           
-          </div>
-        )}
+          {details && <p className="text-sm text-[#0B2A7A]/70">{details}</p>}
 
-        {step === 'success' && downloadToken && (
-          <div className="text-center py-2">
-            <div className="text-3xl mb-3">&#10003;</div>
-            <p className="text-sm font-medium text-gray-700 mb-1">Payment confirmed!</p>
-            <a
-              href={downloadUrl(downloadToken)}
-              className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-full transition-colors"
-            >
-              Download Now
-            </a>
-            <p className="text-xs text-gray-400 mt-2">Link expires in 15 minutes.</p>
-          </div>
-        )}
+          <span className="w-fit rounded-lg bg-[#19C45F] px-4 py-1.5 text-xl font-extrabold text-white shadow-sm">
+            KES {paper.price}
+          </span>
 
-        {step === 'error' && (
-          <div className="text-center py-2">
-            <p className="text-sm text-red-500 mb-4">{errorMsg}</p>
-            <button
-              onClick={retry}
-              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded"
-            >
-              Try Again
-            </button>
-          </div>
-        )}
+          <ol className="mt-2 hidden space-y-3 text-sm text-[#0B2A7A]/80 md:block">
+            <li className="flex items-start gap-3">
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#1A56DB] text-xs font-bold text-white">1</span>
+              Enter your M-Pesa phone number.
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#1A56DB] text-xs font-bold text-white">2</span>
+              Approve the payment prompt on your phone.
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#1A56DB] text-xs font-bold text-white">3</span>
+              Download your paper straight away.
+            </li>
+          </ol>
+        </aside>
+
+        {/* Right: pay */}
+        <section className="p-6 md:flex md:flex-col md:justify-center md:p-8">
+          {step === 'choose' && (
+            <div>
+              <label htmlFor="buy-phone" className={labelClass}>
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                M-Pesa phone number <span className="text-red-500">*</span>
+              </label>
+              <div className="relative mb-4">
+                <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#0B2A7A]/40" aria-hidden="true" />
+                <input
+                  id="buy-phone"
+                  type="tel"
+                  inputMode="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') startPurchase();
+                  }}
+                  placeholder="07XXXXXXXX"
+                  className={inputClass}
+                />
+              </div>
+
+              <label htmlFor="buy-email" className={labelClass}>
+                <Mail className="h-4 w-4" aria-hidden="true" />
+                Email <span className="font-normal text-[#0B2A7A]/60">(optional)</span>
+              </label>
+              <div className="relative mb-5">
+                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#0B2A7A]/40" aria-hidden="true" />
+                <input
+                  id="buy-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className={inputClass}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={startPurchase}
+                disabled={loading}
+                className="flex w-full items-stretch overflow-hidden rounded-full bg-gradient-to-b from-[#1A56DB] to-[#123FA6] text-white shadow-md transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span className="flex w-28 items-center justify-center text-sm font-extrabold tracking-wide">M-PESA</span>
+                <span className="my-3 w-px bg-white/30" aria-hidden="true" />
+                <span className="flex flex-1 items-center justify-between px-5 py-3.5 font-semibold">
+                  {loading ? 'Sending prompt...' : 'Pay with M-Pesa'}
+                  <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                </span>
+              </button>
+
+              <div className="my-3 flex items-center gap-3 text-xs text-[#0B2A7A]/50">
+                <span className="h-px flex-1 bg-[#0B2A7A]/15" />
+                or
+                <span className="h-px flex-1 bg-[#0B2A7A]/15" />
+              </div>
+
+              <a
+                href={buildWhatsAppLink()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-stretch overflow-hidden rounded-full bg-gradient-to-b from-[#25D366] to-[#128C4A] text-white shadow-md transition hover:brightness-105"
+              >
+                <span className="flex w-28 items-center justify-center">
+                  <WhatsAppIcon className="h-7 w-7" />
+                </span>
+                <span className="my-3 w-px bg-white/30" aria-hidden="true" />
+                <span className="flex flex-1 items-center justify-between px-5 py-3.5 font-semibold">
+                  Order via WhatsApp
+                  <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                </span>
+              </a>
+
+              <p className="mt-4 flex items-center gap-2 rounded-xl bg-[#F3F7FF] px-3 py-2.5 text-xs text-[#0B2A7A]/80">
+                <ShieldCheck className="h-4 w-4 shrink-0 text-[#1A56DB]" aria-hidden="true" />
+                Your payment is secure and processed instantly.
+              </p>
+            </div>
+          )}
+
+          {step === 'waiting' && (
+            <div className="py-6 text-center" role="status" aria-live="polite">
+              <div className="mx-auto mb-5 h-10 w-10 animate-spin rounded-full border-[3px] border-[#0B2A7A]/15 border-t-[#1A56DB]" />
+              <p className="text-base font-semibold text-[#0B2A7A]">Check your phone</p>
+              <p className="mt-1 text-sm text-[#0B2A7A]/70">Enter your M-Pesa PIN to complete the payment.</p>
+            </div>
+          )}
+
+          {step === 'success' && downloadToken && (
+            <div className="py-4 text-center">
+              <CheckCircle2 className="mx-auto mb-3 h-14 w-14 text-[#19C45F]" aria-hidden="true" />
+              <p className="mb-5 text-lg font-bold text-[#0B2A7A]">Payment confirmed!</p>
+              <a
+                href={downloadUrl(downloadToken)}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-[#1A56DB] to-[#123FA6] py-3.5 font-semibold text-white shadow-md transition hover:brightness-110"
+              >
+                <Download className="h-5 w-5" aria-hidden="true" />
+                Download Now
+              </a>
+              <p className="mt-3 text-xs text-[#0B2A7A]/60">Link expires in 15 minutes.</p>
+            </div>
+          )}
+
+          {step === 'error' && (
+            <div className="py-4 text-center" role="alert">
+              <AlertCircle className="mx-auto mb-3 h-12 w-12 text-red-500" aria-hidden="true" />
+              <p className="mb-5 text-sm text-red-600">{errorMsg}</p>
+              <button
+                type="button"
+                onClick={retry}
+                className="w-full rounded-full bg-[#E8EEFB] py-3 font-semibold text-[#0B2A7A] transition hover:bg-[#dbe5f8]"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
