@@ -92,7 +92,7 @@ export default function AppRobert() {
       </header>
 
       {/* Filters */}
-      <div className="mx-auto w-full max-w-7xl px-4 pt-6 sm:px-6">
+      <div className="w-full px-4 pt-6 sm:px-6 lg:px-10">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           <FilterSelect
             label="Curriculum"
@@ -150,7 +150,7 @@ export default function AppRobert() {
       </div>
 
       {/* Paper grid */}
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+      <main className="w-full flex-1 px-4 py-6 sm:px-6 lg:px-10">
         {loadState === 'loading' && (
           <p className="text-center text-[#0B2A7A]/60">Loading papers…</p>
         )}
@@ -169,7 +169,7 @@ export default function AppRobert() {
             <p className="mb-4 text-sm font-medium text-[#0B2A7A]/70" aria-live="polite">
               {papers.length} {papers.length === 1 ? 'paper' : 'papers'}
             </p>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
               {papers.map((paper) => (
                 <PaperCardV2 key={paper.id} paper={paper} onSelect={setSelectedPaper} />
               ))}
