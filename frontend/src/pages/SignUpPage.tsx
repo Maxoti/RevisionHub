@@ -97,7 +97,7 @@ export default function SignUpPage() {
       }
 
       sessionStorage.setItem("edusync_user", form.username.trim().toLowerCase());
-      window.location.href = "/saas-upload.html?welcome=1";
+      window.location.href = "/saas-upload?welcome=1";
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "Something went wrong. Try again."
