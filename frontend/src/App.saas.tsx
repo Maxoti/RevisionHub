@@ -5,11 +5,15 @@ import PaperCard from './components/PaperCard.saas';
 import FilterSelect from './components/FilterSelect';
 import type { FilterOption } from './components/FilterSelect';
 import SaasBuyModal from './components/SaasBuyModal';
+import Pagination from './components/Pagination';
 // ---------------------------------------------------------------------------
 // SaaS storefront (e.g. edusynchub.co.ke/jane).
 // The premium single-tenant sites keep using App.tsx. Do not import this file
 // from there. Filter types are local so ./types (shared) does not change.
 // ---------------------------------------------------------------------------
+
+// 24 fills complete rows with 1, 2, 3 or 4 columns
+const PAGE_SIZE = 24;
 
 const API_URL: string = import.meta.env.VITE_API_URL ?? '';
 
@@ -123,6 +127,7 @@ export default function AppSaas() {
   const [loadState, setLoadState]         = useState<LoadState>('loading');
   const [filters, setFilters]             = useState<Filters>(DEFAULT_FILTERS);
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
+  const [page, setPage]                   = useState(1);
 
   // First path segment is the store slug: /jane -> "jane"
   const slug = window.location.pathname.split('/').filter(Boolean)[0] ?? '';
@@ -135,6 +140,7 @@ export default function AppSaas() {
 
     const controller = new AbortController();
     setLoadState('loading');
+    setPage(1); // new filters start on the first page
 
     const qs = new URLSearchParams();
     if (filters.curriculum) qs.set('curriculum', filters.curriculum);
@@ -192,6 +198,13 @@ export default function AppSaas() {
   const gradeOptions = GRADES_BY_CURRICULUM[filters.curriculum] ?? ALL_GRADES;
   const storeName = store?.name ?? '';
   const hasFilters = Object.values(filters).some(Boolean);
+  const totalPages = Math.max(1, Math.ceil(papers.length / PAGE_SIZE));
+  const visiblePapers = papers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  function changePage(next: number) {
+    setPage(next);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   if (loadState === 'notfound') {
     return (
@@ -336,10 +349,11 @@ export default function AppSaas() {
               {papers.length} {papers.length === 1 ? 'paper' : 'papers'}
             </p>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {papers.map((paper) => (
+              {visiblePapers.map((paper) => (
                 <PaperCard key={paper.id} paper={paper} onSelect={handleSelect} />
               ))}
             </div>
+            <Pagination page={page} totalPages={totalPages} onChange={changePage} />
           </>
         )}
       </main>
