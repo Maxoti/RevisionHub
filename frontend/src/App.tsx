@@ -3,6 +3,7 @@ import type { Paper, PaperFilters, Curriculum, ExamType, Term } from './types';
 import { fetchPapers } from './api';
 import PaperCard from './components/PaperCard';
 import BuyModal from './components/BuyModal';
+import AppMark from './AppMark';
 import mwalimuLogo from './assets/mwalimu-austine-logo.png';
 import examVaultLogo from './assets/examvault-logo.jpeg';
 const SITE_VARIANT = import.meta.env.VITE_SITE_VARIANT || 'default';
@@ -23,7 +24,7 @@ const DEFAULT_FILTERS: PaperFilters = {
 
 type LoadState = 'loading' | 'ready' | 'error' | 'empty';
 
-export default function App() {
+function AppClassic() {
   const [papers, setPapers]               = useState<Paper[]>([]);
   const [loadState, setLoadState]         = useState<LoadState>('loading');
   const [filters, setFilters]             = useState<PaperFilters>(DEFAULT_FILTERS);
@@ -269,4 +270,8 @@ export default function App() {
       )}
     </div>
   );
+}
+
+export default function App() {
+  return SITE_VARIANT === 'mark' ? <AppMark /> : <AppClassic />;
 }

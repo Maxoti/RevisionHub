@@ -5,281 +5,494 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Admin — Manage Exam Papers</title>
 <style>
-  * { box-sizing: border-box; }
-
-  html, body {
-    height: 100%;
-    margin: 0;
+  :root {
+    --g900: #064e2b;
+    --g800: #0a6b34;
+    --g700: #0a7d2c;
+    --g600: #00a651;
+    --g500: #00b85c;
+    --g100: #e3f7ea;
+    --g50:  #f2fbf6;
+    --ink:  #1a1a1a;
+    --muted:#6b7280;
+    --line: #e3e8e5;
   }
 
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  html, body { margin: 0; }
+
   body {
-    font-family: system-ui, sans-serif;
-    color: #1a1a1a;
-    background: #ffffff;
     min-height: 100vh;
-    width: 100%;
-    padding: 3rem 4rem;
+    padding: 3rem 1.25rem 4rem;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(900px 520px at 88% -8%,  #98ebc2 0%, transparent 62%),
+      radial-gradient(760px 460px at -8% 12%,  #b6f3d2 0%, transparent 62%),
+      radial-gradient(1000px 520px at 50% 112%, #a2edc7 0%, transparent 62%),
+      linear-gradient(180deg, #e3fbef 0%, #c8f5dd 100%);
+    background-attachment: fixed;
   }
 
   .card {
-    width: 100%;
-    background: #ffffff;
-    padding: 0;
-    padding-bottom: 2rem;
+    width: 100%; max-width: none; box-sizing: border-box;
+    margin: 0 0 1.5rem;
+    padding: 1.5rem 1.75rem 1.75rem;
+    background: #fff;
+    border-radius: 22px;
+    box-shadow: 0 10px 30px rgba(6, 78, 43, 0.10);
   }
 
+  /* ---------- Titles ---------- */
+  .card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin: 0 0 1rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 2px solid var(--g700);
+  }
+  .card-title h2, .card-title h3 {
+    margin: 0;
+    color: var(--g700);
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+  }
+  .title-badge {
+    flex-shrink: 0;
+    width: 56px; height: 42px;
+    display: grid; place-items: center;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #00b85c 0%, #008f45 100%);
+    color: #fff;
+  }
+  .title-badge svg { width: 26px; height: 26px; }
+
+  .list-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.25rem;
+  }
+  .list-title .title-ico { width: 34px; height: 34px; color: var(--g700); }
+  .list-title h3 { margin: 0; color: var(--g700); font-size: 1.5rem; font-weight: 800; }
+  .list-title .spacer { flex: 1; }
+
+  /* ---------- Icons ---------- */
+  svg.i {
+    width: 1em; height: 1em;
+    fill: none; stroke: currentColor;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+
+  /* ---------- Form ---------- */
   .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    column-gap: 3rem;
+    column-gap: 2.25rem;
+    row-gap: 1rem;
+    align-items: start;
   }
+  .full { grid-column: 1 / -1; }
 
-  .form-grid > .full { grid-column: 1 / -1; }
-
-  h2 {
-    margin: 0 0 0.25rem;
-    color: #0a7d2c;
-    font-size: 1.5rem;
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.35rem;
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--ink);
   }
+  label svg.i { width: 20px; height: 20px; color: var(--g700); }
+  label .opt { font-weight: 400; color: var(--muted); }
 
-  h3 {
-    margin: 2.5rem 0 1rem;
-    color: #1a1a1a;
-    font-size: 1.15rem;
-  }
-
-  .subtitle {
-    margin: 0 0 1.5rem;
-    color: #666;
-    font-size: 0.85rem;
-  }
-
-  label { display: block; margin-top: 1rem; font-weight: 600; font-size: 0.875rem; color: #1a1a1a; }
-
-  input, select, textarea {
-    width: 100%; padding: 0.6rem 0.75rem; margin-top: 0.3rem;
-    border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;
+  input, select {
+    width: 100%;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid #cfd9d3;
+    border-radius: 10px;
     background: #fff;
+    font: inherit;
+    font-size: 0.92rem;
+    color: var(--ink);
     transition: border-color 0.15s, box-shadow 0.15s;
   }
-
+  input::placeholder { color: #9ca3af; }
   input:focus, select:focus {
     outline: none;
-    border-color: #00a651;
-    box-shadow: 0 0 0 3px rgba(0,166,81,0.15);
+    border-color: var(--g600);
+    box-shadow: 0 0 0 3px rgba(0, 166, 81, 0.18);
   }
+  input[type="file"] { padding: 0.5rem 0.6rem; background: var(--g50); }
 
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .checkbox-row { display: flex; align-items: center; gap: 0.6rem; }
+  .checkbox-row input { width: 18px; height: 18px; accent-color: var(--g600); }
+  .checkbox-row label { margin: 0; }
+  .hint { margin: -0.4rem 0 0; font-size: 0.78rem; color: var(--muted); }
 
-  .checkbox-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem; }
-  .checkbox-row input { width: auto; accent-color: #00a651; }
+  .divider { border: none; border-top: 1px solid var(--line); margin: 0.25rem 0; }
 
-  .hint { font-size: 0.75rem; color: #888; margin: 0.4rem 0 0; }
-
-  hr { border: none; border-top: 1px solid #eee; margin-top: 1.5rem; }
-
-  button {
-    margin-top: 1.75rem; width: 100%; padding: 0.85rem;
-    background: #00a651;
+  /* ---------- Buttons ---------- */
+  .btn-primary {
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.85rem;
+    border: none; border-radius: 999px;
     background: linear-gradient(180deg, #00b85c 0%, #008f45 100%);
-    color: white; border: none;
-    border-radius: 50px; font-size: 1rem; font-weight: 600; cursor: pointer;
+    color: #fff;
+    font: inherit; font-size: 1.02rem; font-weight: 700;
     letter-spacing: 0.2px;
+    cursor: pointer;
+    box-shadow: 0 6px 14px rgba(0, 143, 69, 0.28);
     transition: filter 0.15s, transform 0.05s;
   }
+  .btn-primary svg.i { width: 22px; height: 22px; }
+  .btn-primary:hover:not(:disabled) { filter: brightness(1.06); }
+  .btn-primary:active:not(:disabled) { transform: translateY(1px); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
-  button:hover:not(:disabled) { filter: brightness(1.05); }
-  button:active:not(:disabled) { transform: translateY(1px); }
-  button:disabled { opacity: 0.6; cursor: not-allowed; }
-
-  #status { margin-top: 1.25rem; font-weight: 600; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; }
-  #status.ok  { background: #e3f7ea; color: #0a7d2c; border: 1px solid #b6e8c8; }
-  #status.err { background: #fbe9e9; color: #a4282c; border: 1px solid #f1c4c4; }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 0.5rem;
-    font-size: 0.85rem;
+  .btn-pill {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.5rem 1.1rem;
+    border: none; border-radius: 999px;
+    font: inherit; font-size: 0.85rem; font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.15s;
   }
+  .btn-pill:hover { filter: brightness(0.96); }
+  .btn-refresh { background: linear-gradient(180deg, #00b85c 0%, #008f45 100%); color: #fff; }
+  .btn-edit    { padding: 0.35rem 0.8rem; background: #e8f0ff; color: #1a56db; }
+  .btn-delete  { padding: 0.35rem 0.8rem; background: #fde8e8; color: #c81e1e; }
+  .btn-cancel  { background: #eef0ef; color: #444; }
+  .btn-pill svg.i { width: 15px; height: 15px; }
+  .btn-pill:focus-visible, .pager button:focus-visible { outline: 3px solid rgba(0,166,81,.35); outline-offset: 2px; }
 
+  #status, #edit-status {
+    margin: 1.1rem 0 0;
+    padding: 0.75rem 0.9rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  #status.ok  { background: var(--g100); color: var(--g700); border: 1px solid #b6e8c8; }
+  #status.err, #edit-status.err { background: #fde8e8; color: #a4282c; border: 1px solid #f1c4c4; }
+
+  /* ---------- Password show/hide ---------- */
+  .pass-wrap { position: relative; }
+  .pass-wrap input { padding-right: 2.9rem; }
+  .pass-toggle {
+    position: absolute; right: 0.35rem; top: 50%; transform: translateY(-50%);
+    width: 36px; height: 36px;
+    display: grid; place-items: center;
+    padding: 0; border: none; border-radius: 999px;
+    background: transparent; color: var(--g700);
+    cursor: pointer;
+  }
+  .pass-toggle:hover { background: var(--g100); }
+  .pass-toggle:focus-visible { outline: 3px solid rgba(0,166,81,.35); outline-offset: 1px; }
+  .pass-toggle svg { width: 20px; height: 20px; }
+  .pass-toggle .eye-off { display: none; }
+  .pass-toggle[aria-pressed="true"] .eye-on  { display: none; }
+  .pass-toggle[aria-pressed="true"] .eye-off { display: block; }
+
+  /* ---------- List toolbar ---------- */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin: 0.75rem 0 0.75rem;
+  }
+  .search-wrap { position: relative; flex: 1 1 240px; }
+  .search-wrap svg.i {
+    position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%);
+    width: 18px; height: 18px; color: var(--g700);
+  }
+  .search-wrap input { padding-left: 2.4rem; border-radius: 999px; }
+  .toolbar select { width: auto; border-radius: 999px; padding-right: 1.6rem; }
+
+  #papers-status { margin: 0 0 0.6rem; font-size: 0.88rem; font-weight: 600; color: #4b5563; }
+
+  /* ---------- Table ---------- */
+  .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--line); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
   th, td {
     text-align: left;
-    padding: 0.6rem 0.5rem;
-    border-bottom: 1px solid #eee;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid #edf0ee;
+    border-right: 1px solid #edf0ee;
     vertical-align: middle;
   }
-
+  th:last-child, td:last-child { border-right: none; }
+  tbody tr:last-child td { border-bottom: none; }
   th {
-    color: #666;
-    font-weight: 600;
-    font-size: 0.75rem;
+    background: var(--g100);
+    color: var(--g900);
+    font-size: 0.78rem;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+    white-space: nowrap;
   }
-
-  tr.inactive { opacity: 0.5; }
+  tbody tr:hover { background: #fafdfb; }
+  tr.inactive td { opacity: 0.55; }
+  tr.inactive td:last-child { opacity: 1; }
+  td.num { white-space: nowrap; }
 
   .badge {
     display: inline-block;
-    padding: 0.15rem 0.5rem;
-    border-radius: 20px;
-    font-size: 0.7rem;
-    font-weight: 600;
+    padding: 0.15rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
   }
-  .badge.active   { background: #e3f7ea; color: #0a7d2c; }
-  .badge.inactive { background: #f1f1f1; color: #888; }
+  .badge.active   { background: #d4f5e0; color: var(--g700); }
+  .badge.inactive { background: #eef0ef; color: #6b7280; }
 
-  .row-actions { display: flex; gap: 0.4rem; }
-  .row-actions button {
-    margin: 0; width: auto; padding: 0.35rem 0.75rem;
-    font-size: 0.78rem; border-radius: 6px;
+  .row-actions { display: flex; gap: 0.4rem; white-space: nowrap; }
+
+  /* ---------- Pagination ---------- */
+  .pager-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 0.9rem;
   }
-  .btn-edit   { background: #eef4ff; color: #1a56db; }
-  .btn-delete { background: #fbe9e9; color: #a4282c; }
-  .btn-edit:hover, .btn-delete:hover { filter: brightness(0.97); }
-
-  #refresh-btn {
-    margin-top: 0; width: auto; padding: 0.5rem 1.25rem; font-size: 0.85rem;
+  .pager-info { font-size: 0.85rem; color: #4b5563; }
+  .pager { display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+  .pager button {
+    min-width: 36px; height: 36px;
+    padding: 0 0.6rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid #cfd9d3;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--g800);
+    font: inherit; font-size: 0.85rem; font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
   }
+  .pager button svg.i { width: 16px; height: 16px; }
+  .pager button:hover:not(:disabled):not(.current) { background: var(--g100); border-color: var(--g600); }
+  .pager button.current { background: var(--g600); border-color: var(--g600); color: #fff; cursor: default; }
+  .pager button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .pager .gap { padding: 0 0.15rem; color: #9ca3af; }
 
-  .list-header {
-    display: flex; justify-content: space-between; align-items: center;
-  }
-
-  #papers-status { font-size: 0.85rem; color: #888; margin: 0.5rem 0; }
-
+  /* ---------- Edit modal ---------- */
   .modal-overlay {
     display: none;
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(6, 40, 24, 0.55);
     align-items: center; justify-content: center;
+    padding: 1rem;
     z-index: 50;
   }
   .modal-overlay.open { display: flex; }
-
   .modal {
-    background: #fff; border-radius: 10px;
-    width: 100%; max-width: 420px;
-    padding: 1.75rem; max-height: 90vh; overflow-y: auto;
+    width: 100%; max-width: 440px;
+    max-height: 90vh; overflow-y: auto;
+    padding: 1.6rem;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  }
+  .modal .card-title { margin-bottom: 0.5rem; }
+  .modal .card-title h3 { font-size: 1.3rem; }
+  .modal .field { margin-top: 0.9rem; }
+  .modal-actions { display: flex; gap: 0.6rem; margin-top: 1.4rem; }
+  .modal-actions .btn-primary { margin-top: 0; }
+  .modal-actions .btn-cancel { justify-content: center; padding: 0.85rem 1.4rem; font-size: 1rem; }
+
+  /* ---------- Small screens ---------- */
+  @media (max-width: 700px) {
+    body { padding: 1.25rem 0.75rem 3rem; }
+    .card { padding: 1.1rem 1rem 1.25rem; border-radius: 18px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .card-title h2, .list-title h3 { font-size: 1.25rem; }
+    th:nth-child(2), td:nth-child(2),
+    th:nth-child(3), td:nth-child(3) { display: none; }
+    .pager-bar { justify-content: center; }
   }
 
-  .modal h3 { margin-top: 0; }
-
-  .modal-actions { display: flex; gap: 0.6rem; margin-top: 1.5rem; }
-  .modal-actions button { margin-top: 0; }
-  .btn-cancel { background: #f1f1f1; color: #444; }
-
-  @media (max-width: 700px) {
-    body { padding: 2rem 1.25rem; }
-    .form-grid { grid-template-columns: 1fr; }
-    .row { grid-template-columns: 1fr; }
-    table { font-size: 0.78rem; }
-    th:nth-child(3), td:nth-child(3) { display: none; }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
   }
 </style>
 </head>
 <body>
-  <div class="card">
+
+<!-- Icon sprite (no external files) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-cap" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></symbol>
+    <symbol id="i-coins" viewBox="0 0 24 24"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8M16 13H8M16 17H8"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-first" viewBox="0 0 24 24"><path d="m11 17-5-5 5-5"/><path d="m18 17-5-5 5-5"/></symbol>
+    <symbol id="i-last" viewBox="0 0 24 24"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></symbol>
+  </defs>
+</svg>
+
+<!-- ===================== Upload card ===================== -->
+<div class="card">
+  <div class="card-title">
+    <span class="title-badge"><svg class="i" aria-hidden="true"><use href="#i-upload"/></svg></span>
     <h2>Upload Exam Paper</h2>
+  </div>
 
-    <div id="upload-form">
-      <div class="form-grid">
-        <div>
-          <label>Admin username</label>
-          <input id="admin-user" autocomplete="username" />
-        </div>
-        <div>
-          <label>Admin password</label>
+  <div id="upload-form">
+    <div class="form-grid">
+      <div>
+        <label for="admin-user"><svg class="i" aria-hidden="true"><use href="#i-user"/></svg>Admin username</label>
+        <input id="admin-user" autocomplete="username" />
+      </div>
+      <div>
+        <label for="admin-pass"><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg>Admin password</label>
+        <div class="pass-wrap">
           <input id="admin-pass" type="password" autocomplete="current-password" />
-        </div>
-
-        <hr class="full" />
-
-        <div>
-          <label>Curriculum</label>
-          <select id="curriculum">
-            <option value="">-- Select --</option>
-            <option value="CBE">CBE (PP1–Grade 10)</option>
-            <option value="844">8-4-4 (Form 1–4)</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Grade / Class</label>
-          <select id="grade">
-            <option value="">-- Select curriculum first --</option>
-          </select>
-        </div>
-
-        <div class="full">
-          <label>Subject <span style="font-weight:400">(leave blank for Full Set bundle)</span></label>
-          <input id="subject" placeholder="e.g. Mathematics" />
-        </div>
-
-        <div>
-          <label>Types</label>
-          <select id="exam_type">
-            <option value="">-- Select --</option>
-            <option value="Opener">Opener</option>
-            <option value="Mid Term">Mid Term</option>
-            <option value="End Term">End Term</option>
-            <option value="Weekly">Weekly</option>
-            <option value="Schemes of Work">Schemes of Work</option>
-            <option value="Lesson Plans">Lesson Plans</option>
-            <option value="Revision Materials">Revision Materials</option>
-          </select>
-        </div>
-        <div>
-          <label>Term</label>
-          <select id="term">
-            <option value="">-- Select --</option>
-            <option value="1">Term 1</option>
-            <option value="2">Term 2</option>
-            <option value="3">Term 3</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Year</label>
-          <input id="year" type="number" placeholder="2026" value="2026" />
-        </div>
-        <div>
-          <label>Price (KES)</label>
-          <input id="price" type="number" placeholder="50" />
-        </div>
-
-        <div class="full checkbox-row">
-          <input type="checkbox" id="is_bundle" />
-          <label for="is_bundle" style="margin-top:0">This is a Full Set bundle (all subjects)</label>
-        </div>
-        <p class="hint full">Full Set bundles should be uploaded as a .zip file containing all subject PDFs.</p>
-
-        <div class="full">
-          <label>Title (auto-generated, or override)</label>
-          <input id="title" placeholder="e.g. Grade 5 Mathematics Mid Term 2 2026" />
-        </div>
-
-        <div class="full">
-          <label>File (PDF or ZIP for bundles)</label>
-          <input id="file" type="file" accept=".pdf,.zip" />
-        </div>
-
-        <div class="full">
-          <button id="upload-btn" onclick="upload()">Upload Paper</button>
+          <button class="pass-toggle" id="pass-toggle" type="button" aria-label="Show password" aria-pressed="false">
+            <svg class="i eye-on" aria-hidden="true"><use href="#i-eye"/></svg>
+            <svg class="i eye-off" aria-hidden="true"><use href="#i-eye-off"/></svg>
+          </button>
         </div>
       </div>
+
+      <hr class="divider full" />
+
+      <div>
+        <label for="curriculum"><svg class="i" aria-hidden="true"><use href="#i-book"/></svg>Curriculum</label>
+        <select id="curriculum">
+          <option value="">-- Select --</option>
+          <option value="CBE">CBE (PP1–Grade 10)</option>
+          <option value="844">8-4-4 (Form 1–4)</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="grade"><svg class="i" aria-hidden="true"><use href="#i-users"/></svg>Grade / Class</label>
+        <select id="grade">
+          <option value="">-- Select curriculum first --</option>
+        </select>
+      </div>
+
+      <div class="full">
+        <label for="subject"><svg class="i" aria-hidden="true"><use href="#i-cap"/></svg>Subject <span class="opt">(leave blank for Full Set bundle)</span></label>
+        <input id="subject" placeholder="e.g. Mathematics" />
+      </div>
+
+      <div>
+        <label for="exam_type"><svg class="i" aria-hidden="true"><use href="#i-list"/></svg>Types</label>
+        <select id="exam_type">
+          <option value="">-- Select --</option>
+        </select>
+      </div>
+      <div>
+        <label for="term"><svg class="i" aria-hidden="true"><use href="#i-calendar"/></svg>Term</label>
+        <select id="term">
+          <option value="">-- Select --</option>
+        </select>
+      </div>
+
+      <div class="full" id="paper-wrap" hidden>
+        <label for="paper"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg>Paper / Variant <span class="opt">(optional, Cambridge only)</span></label>
+        <input id="paper" placeholder="e.g. Paper 2 or Paper 4 Variant 1" />
+      </div>
+
+      <div>
+        <label for="year"><svg class="i" aria-hidden="true"><use href="#i-calendar"/></svg>Year</label>
+        <input id="year" type="number" placeholder="2026" value="2026" />
+      </div>
+      <div>
+        <label for="price"><svg class="i" aria-hidden="true"><use href="#i-coins"/></svg>Price (KES)</label>
+        <input id="price" type="number" placeholder="50" />
+      </div>
+
+      <div class="full checkbox-row">
+        <input type="checkbox" id="is_bundle" />
+        <label for="is_bundle">This is a Full Set bundle (all subjects)</label>
+      </div>
+      <p class="hint full" id="bundle-hint">Full Set bundles should be uploaded as a .zip file containing all subject PDFs.</p>
+
+      <div class="full">
+        <label for="title"><svg class="i" aria-hidden="true"><use href="#i-tag"/></svg>Title (auto-generated, or override)</label>
+        <input id="title" placeholder="e.g. Grade 5 Mathematics Mid-Term Exams Term 2 2026" />
+      </div>
+
+      <div class="full">
+        <label for="file"><svg class="i" aria-hidden="true"><use href="#i-clip"/></svg>File (PDF or ZIP for bundles)</label>
+        <input id="file" type="file" accept=".pdf,.zip" />
+      </div>
+
+      <div class="full">
+        <button class="btn-primary" id="upload-btn" type="button" onclick="upload()">
+          <svg class="i" aria-hidden="true"><use href="#i-upload"/></svg><span>Upload Paper</span>
+        </button>
+      </div>
     </div>
+  </div>
 
-    <p id="status" style="display:none"></p>
+  <p id="status" role="status" style="display:none"></p>
+</div>
 
-    <div class="list-header">
-      <h3>Manage Papers</h3>
-      <button id="refresh-btn" onclick="loadPapers()">Refresh</button>
+<!-- ===================== Manage card ===================== -->
+<div class="card">
+  <div class="list-title">
+    <svg class="i title-ico" aria-hidden="true"><use href="#i-file"/></svg>
+    <h3>Manage Papers</h3>
+    <span class="spacer"></span>
+    <button class="btn-pill btn-refresh" id="refresh-btn" type="button" onclick="loadPapers()">
+      <svg class="i" aria-hidden="true"><use href="#i-refresh"/></svg>Refresh
+    </button>
+  </div>
+
+  <p id="papers-status" role="status">Enter admin credentials above, then click Refresh to load papers.</p>
+
+  <div class="toolbar" id="list-toolbar" hidden>
+    <div class="search-wrap">
+      <svg class="i" aria-hidden="true"><use href="#i-search"/></svg>
+      <input id="search" type="search" placeholder="Search title, subject, grade or type" aria-label="Search papers" />
     </div>
-    <p id="papers-status">Enter admin credentials above, then click Refresh to load papers.</p>
+    <select id="status-filter" aria-label="Filter by status">
+      <option value="all">All statuses</option>
+      <option value="active">Active</option>
+      <option value="hidden">Hidden</option>
+    </select>
+    <select id="page-size" aria-label="Papers per page">
+      <option value="10">10 per page</option>
+      <option value="25" selected>25 per page</option>
+      <option value="50">50 per page</option>
+      <option value="100">100 per page</option>
+    </select>
+  </div>
 
-    <table id="papers-table" style="display:none">
+  <div class="table-wrap" id="papers-table" hidden>
+    <table>
       <thead>
         <tr>
           <th>Title</th>
@@ -294,261 +507,530 @@
     </table>
   </div>
 
-  <div class="modal-overlay" id="edit-modal">
-    <div class="modal">
-      <h3>Edit Paper</h3>
-      <input type="hidden" id="edit-id" />
-
-      <label>Title</label>
-      <input id="edit-title" />
-
-      <label>Types</label>
-      <select id="edit-exam_type">
-        <option value="Opener">Opener</option>
-        <option value="Mid Term">Mid Term</option>
-        <option value="End Term">End Term</option>
-        <option value="Weekly">Weekly</option>
-        <option value="Schemes of Work">Schemes of Work</option>
-        <option value="Lesson Plans">Lesson Plans</option>
-        <option value="Revision Materials">Revision Materials</option>
-      </select>
-
-      <label>Term</label>
-      <select id="edit-term">
-        <option value="1">Term 1</option>
-        <option value="2">Term 2</option>
-        <option value="3">Term 3</option>
-      </select>
-
-      <label>Year</label>
-      <input id="edit-year" type="number" />
-
-      <label>Price (KES)</label>
-      <input id="edit-price" type="number" />
-
-      <div class="checkbox-row">
-        <input type="checkbox" id="edit-active" />
-        <label for="edit-active" style="margin-top:0">Active (visible to buyers)</label>
-      </div>
-
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
-        <button onclick="saveEdit()">Save Changes</button>
-      </div>
-      <p id="edit-status" style="display:none"></p>
-    </div>
+  <div class="pager-bar" id="pager-bar" hidden>
+    <div class="pager-info" id="pager-info"></div>
+    <nav class="pager" id="pager" aria-label="Pagination"></nav>
   </div>
+</div>
 
-  <script>
-    const API_BASE = `https://${window.location.hostname.replace('admin.', 'api.')}/api`;
+<!-- ===================== Edit modal ===================== -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-heading">
+    <div class="card-title">
+      <span class="title-badge"><svg class="i" aria-hidden="true"><use href="#i-edit"/></svg></span>
+      <h3 id="edit-heading">Edit Paper</h3>
+    </div>
+    <input type="hidden" id="edit-id" />
 
-    const CBC_GRADES  = ['PP1','PP2','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
-    const FORM_GRADES = ['Form 1','Form 2','Form 3','Form 4'];
+    <div class="field">
+      <label for="edit-title"><svg class="i" aria-hidden="true"><use href="#i-tag"/></svg>Title</label>
+      <input id="edit-title" />
+    </div>
+    <div class="field">
+      <label for="edit-exam_type"><svg class="i" aria-hidden="true"><use href="#i-list"/></svg>Types</label>
+      <select id="edit-exam_type"></select>
+    </div>
+    <div class="field">
+      <label for="edit-term"><svg class="i" aria-hidden="true"><use href="#i-calendar"/></svg>Term</label>
+      <select id="edit-term"></select>
+    </div>
+    <div class="field">
+      <label for="edit-year"><svg class="i" aria-hidden="true"><use href="#i-calendar"/></svg>Year</label>
+      <input id="edit-year" type="number" />
+    </div>
+    <div class="field">
+      <label for="edit-price"><svg class="i" aria-hidden="true"><use href="#i-coins"/></svg>Price (KES)</label>
+      <input id="edit-price" type="number" />
+    </div>
 
-    document.getElementById('curriculum').addEventListener('change', function () {
-      const grade = document.getElementById('grade');
-      const options = this.value === 'CBE' ? CBC_GRADES : this.value === '844' ? FORM_GRADES : [];
-      grade.innerHTML = options.length
-        ? options.map(g => `<option value="${g}">${g}</option>`).join('')
-        : '<option value="">-- Select curriculum first --</option>';
-      autoTitle();
-    });
+    <div class="field checkbox-row">
+      <input type="checkbox" id="edit-active" />
+      <label for="edit-active">Active (visible to buyers)</label>
+    </div>
 
-    ['grade','subject','exam_type','term','year','is_bundle'].forEach(id => {
-      document.getElementById(id)?.addEventListener('change', autoTitle);
-      document.getElementById(id)?.addEventListener('input', autoTitle);
-    });
+    <div class="modal-actions">
+      <button class="btn-pill btn-cancel" type="button" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-primary" type="button" onclick="saveEdit()">Save Changes</button>
+    </div>
+    <p id="edit-status" style="display:none"></p>
+  </div>
+</div>
 
-    function autoTitle() {
-      const grade    = document.getElementById('grade').value;
-      const subject  = document.getElementById('subject').value.trim();
-      const examType = document.getElementById('exam_type').value;
-      const term     = document.getElementById('term').value;
-      const year     = document.getElementById('year').value;
-      const bundle   = document.getElementById('is_bundle').checked;
+<script>
+  const API_BASE = `https://${window.location.hostname.replace('admin.', 'api.')}/api`;
 
-      if (grade && examType && term && year) {
-        const subjectPart = bundle ? 'Full Set' : (subject || '');
-        document.getElementById('title').value =
-          [grade, subjectPart, examType, 'Term', term, year].filter(Boolean).join(' ');
-      }
+  // ---- Curriculums, grades, types and terms ---------------------------
+  // Keys must match the <option value> of the Curriculum select above.
+  const GRADES_BY_CURRICULUM = {
+    'CBE': [
+      'PP1', 'PP2',
+      'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6',
+      'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10',
+    ],
+    '844': ['Form 1', 'Form 2', 'Form 3', 'Form 4'],
+  };
+
+  // Same names the storefront filters use, so uploads show up under each filter.
+  const ALL_TYPES = [
+    'Opener',
+    'Mid Term',
+    'End Term',
+    'Weekly',
+    'Schemes of Work',
+    'Lesson Plans',
+    'Revision Materials',
+  ];
+
+  const EXTRA_TYPES = {
+    'CBE': [],
+    '844': [],
+  };
+
+  const STANDARD_TERMS = [['1', 'Term 1'], ['2', 'Term 2'], ['3', 'Term 3']];
+  const TERMS_BY_CURRICULUM = {
+    'CBE': STANDARD_TERMS,
+    '844': STANDARD_TERMS,
+  };
+
+  const DEFAULT_BUNDLE_HINT = 'Full Set bundles should be uploaded as a .zip file containing all subject PDFs.';
+
+  const typesFor = c => [...ALL_TYPES, ...(EXTRA_TYPES[c] || [])];
+  const termsFor = c => TERMS_BY_CURRICULUM[c] || STANDARD_TERMS;
+  const everyType = () => [...new Set([...ALL_TYPES, ...Object.values(EXTRA_TYPES).flat()])];
+  const everyTerm = () => {
+    const seen = new Map();
+    Object.values(TERMS_BY_CURRICULUM).flat().forEach(([v, l]) => seen.set(v, l));
+    return [...seen.entries()];
+  };
+
+  const optionsHtml = list => list.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+  const termOptionsHtml = list => list.map(([v, l]) => `<option value="${escapeHtml(v)}">${escapeHtml(l)}</option>`).join('');
+
+  // Re-fill a <select> but keep the current choice when it is still valid.
+  function refill(select, html, placeholder) {
+    const previous = select.value;
+    select.innerHTML = (placeholder ? `<option value="">${placeholder}</option>` : '') + html;
+    if (previous && Array.from(select.options).some(o => o.value === previous)) {
+      select.value = previous;
     }
+  }
 
-    function authHeader() {
-      const user = document.getElementById('admin-user').value;
-      const pass = document.getElementById('admin-pass').value;
-      return 'Basic ' + btoa(`${user}:${pass}`);
+  function applyCurriculum() {
+    const c = document.getElementById('curriculum').value;
+
+    const grade = document.getElementById('grade');
+    const grades = GRADES_BY_CURRICULUM[c] || [];
+    grade.innerHTML = grades.length
+      ? optionsHtml(grades)
+      : '<option value="">-- Select curriculum first --</option>';
+
+    refill(document.getElementById('exam_type'), optionsHtml(typesFor(c)), '-- Select --');
+    refill(document.getElementById('term'), termOptionsHtml(termsFor(c)), '-- Select --');
+
+    // Paper / Variant only applies to Cambridge papers.
+    const paperWrap = document.getElementById('paper-wrap');
+    paperWrap.hidden = c !== 'Cambridge';
+    if (c !== 'Cambridge') document.getElementById('paper').value = '';
+
+    updateBundleHint();
+    autoTitle();
+  }
+
+  // Edit modal lists every type and term so any existing paper can be edited.
+  (function initSelects() {
+    refill(document.getElementById('exam_type'), optionsHtml(ALL_TYPES), '-- Select --');
+    refill(document.getElementById('term'), termOptionsHtml(STANDARD_TERMS), '-- Select --');
+    document.getElementById('edit-exam_type').innerHTML = optionsHtml(everyType());
+    document.getElementById('edit-term').innerHTML = termOptionsHtml(everyTerm());
+  })();
+
+  function updateBundleHint() {
+    const c = document.getElementById('curriculum').value;
+    const grade = document.getElementById('grade').value;
+    const num = parseInt((grade.match(/\d+/) || [])[0], 10);
+    const hint = document.getElementById('bundle-hint');
+
+    if (c === 'CBE' && grade.startsWith('Grade') && num >= 10) {
+      hint.textContent = 'Grade 10–12 learners follow pathways (STEM, Social Sciences, Arts & Sports). A Full Set bundle should cover one pathway, so say which one in the title.';
+    } else if (c === 'Cambridge' && grade.startsWith('Year') && num >= 10) {
+      hint.textContent = 'Year 10–13 (IGCSE and A Level) students choose their own subjects, so individual subjects sell better. Only use a bundle for a specific subject combination.';
+    } else {
+      hint.textContent = DEFAULT_BUNDLE_HINT;
     }
+  }
 
-    async function upload() {
-      const btn    = document.getElementById('upload-btn');
-      const status = document.getElementById('status');
+  document.getElementById('curriculum').addEventListener('change', applyCurriculum);
+  document.getElementById('grade').addEventListener('change', updateBundleHint);
 
-      const formData = new FormData();
-      formData.append('title',      document.getElementById('title').value);
-      formData.append('curriculum', document.getElementById('curriculum').value);
-      formData.append('grade',      document.getElementById('grade').value);
-      formData.append('subject',    document.getElementById('subject').value);
-      formData.append('exam_type',  document.getElementById('exam_type').value);
-      formData.append('term',       document.getElementById('term').value);
-      formData.append('year',       document.getElementById('year').value);
-      formData.append('price',      document.getElementById('price').value);
-      formData.append('is_bundle',  document.getElementById('is_bundle').checked);
-      const fileInput = document.getElementById('file');
-      if (fileInput.files[0]) formData.append('file', fileInput.files[0]);
+  ['grade','subject','paper','exam_type','term','year','is_bundle'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', autoTitle);
+    document.getElementById(id)?.addEventListener('input', autoTitle);
+  });
 
-      btn.disabled = true;
-      btn.textContent = 'Uploading…';
-      status.style.display = 'none';
+  function autoTitle() {
+    const grade    = document.getElementById('grade').value;
+    const subject  = document.getElementById('subject').value.trim();
+    const paper    = document.getElementById('paper').value.trim();
+    const examType = document.getElementById('exam_type').value;
+    const term     = document.getElementById('term').value;
+    const year     = document.getElementById('year').value;
+    const bundle   = document.getElementById('is_bundle').checked;
 
-      try {
-        const res = await fetch(`${API_BASE}/admin/papers`, {
-          method: 'POST',
-          headers: { Authorization: authHeader() },
-          body: formData,
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Upload failed');
-        status.className = 'ok';
-        status.textContent = `Uploaded successfully — Paper ID ${data.id}`;
-        document.getElementById('file').value = '';
-        loadPapers();
-      } catch (err) {
-        status.className = 'err';
-        status.textContent = 'Error: ' + err.message;
-      } finally {
-        status.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = 'Upload Paper';
-      }
+    if (grade && examType && term && year) {
+      const subjectPart = bundle ? 'Full Set' : (subject || '');
+      const termPart = /^\d+$/.test(term) ? `Term ${term}` : `${term} Series`;
+      document.getElementById('title').value =
+        [grade, subjectPart, paper, examType, termPart, year].filter(Boolean).join(' ');
     }
+  }
 
-    async function loadPapers() {
-      const listStatus = document.getElementById('papers-status');
-      const table = document.getElementById('papers-table');
-      const tbody = document.getElementById('papers-tbody');
+  function authHeader() {
+    const user = document.getElementById('admin-user').value;
+    const pass = document.getElementById('admin-pass').value;
+    return 'Basic ' + btoa(`${user}:${pass}`);
+  }
 
-      if (!document.getElementById('admin-user').value || !document.getElementById('admin-pass').value) {
-        listStatus.textContent = 'Enter admin credentials above first.';
-        return;
-      }
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
 
-      listStatus.textContent = 'Loading…';
-      table.style.display = 'none';
+  // ---- Upload ---------------------------------------------------------
+  async function upload() {
+    const btn    = document.getElementById('upload-btn');
+    const status = document.getElementById('status');
 
-      try {
-        const res = await fetch(`${API_BASE}/admin/papers`, {
-          headers: { Authorization: authHeader() },
-        });
-        if (!res.ok) throw new Error('Failed to load papers (check credentials)');
-        const papers = await res.json();
+    const formData = new FormData();
+    formData.append('title',      document.getElementById('title').value);
+    formData.append('curriculum', document.getElementById('curriculum').value);
+    formData.append('grade',      document.getElementById('grade').value);
+    formData.append('subject',    document.getElementById('subject').value);
+    formData.append('exam_type',  document.getElementById('exam_type').value);
+    formData.append('term',       document.getElementById('term').value);
+    formData.append('year',       document.getElementById('year').value);
+    formData.append('price',      document.getElementById('price').value);
+    formData.append('is_bundle',  document.getElementById('is_bundle').checked);
+    const paperValue = document.getElementById('paper').value.trim();
+    if (paperValue) formData.append('paper', paperValue);
+    const fileInput = document.getElementById('file');
+    if (fileInput.files[0]) formData.append('file', fileInput.files[0]);
 
-        if (papers.length === 0) {
-          listStatus.textContent = 'No papers found.';
-          return;
-        }
+    btn.disabled = true;
+    btn.querySelector('span').textContent = 'Uploading…';
+    status.style.display = 'none';
 
-        tbody.innerHTML = papers.map(p => `
-          <tr class="${p.active ? '' : 'inactive'}" data-paper='${JSON.stringify(p).replace(/'/g, "&#39;")}'>
-            <td>${escapeHtml(p.title)}</td>
-            <td>${escapeHtml(p.exam_type)}${p.is_bundle ? ' (Bundle)' : ''}</td>
-            <td>${escapeHtml(p.grade)}</td>
-            <td>KES ${p.price}</td>
-            <td><span class="badge ${p.active ? 'active' : 'inactive'}">${p.active ? 'Active' : 'Hidden'}</span></td>
-            <td class="row-actions">
-              <button class="btn-edit" onclick="openEditModal(${p.id})">Edit</button>
-              <button class="btn-delete" onclick="deletePaper(${p.id}, '${escapeHtml(p.title).replace(/'/g, "\\'")}')">Delete</button>
-            </td>
-          </tr>
-        `).join('');
-
-        table.style.display = '';
-        listStatus.textContent = `${papers.length} paper(s) loaded.`;
-      } catch (err) {
-        listStatus.textContent = 'Error: ' + err.message;
-      }
-    }
-
-    function escapeHtml(str) {
-      if (str == null) return '';
-      return String(str)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
-
-    async function deletePaper(id, title) {
-      if (!confirm(`Delete "${title}"? This hides it from buyers immediately.`)) return;
-
-      try {
-        const res = await fetch(`${API_BASE}/admin/papers/${id}`, {
-          method: 'DELETE',
-          headers: { Authorization: authHeader() },
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Delete failed');
-        loadPapers();
-      } catch (err) {
-        alert('Error deleting paper: ' + err.message);
-      }
-    }
-
-    function openEditModal(id) {
-      const allRows = document.querySelectorAll('#papers-tbody tr');
-      let paper = null;
-      allRows.forEach(r => {
-        const data = JSON.parse(r.getAttribute('data-paper').replace(/&#39;/g, "'"));
-        if (data.id === id) paper = data;
+    try {
+      const res = await fetch(`${API_BASE}/admin/papers`, {
+        method: 'POST',
+        headers: { Authorization: authHeader() },
+        body: formData,
       });
-      if (!paper) return;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      status.className = 'ok';
+      status.textContent = `Uploaded successfully — Paper ID ${data.id}`;
+      document.getElementById('file').value = '';
+      listState.page = 1;          // show the newest paper
+      loadPapers();
+    } catch (err) {
+      status.className = 'err';
+      status.textContent = 'Error: ' + err.message;
+    } finally {
+      status.style.display = 'block';
+      btn.disabled = false;
+      btn.querySelector('span').textContent = 'Upload Paper';
+    }
+  }
 
-      document.getElementById('edit-id').value = paper.id;
-      document.getElementById('edit-title').value = paper.title;
-      document.getElementById('edit-exam_type').value = paper.exam_type;
-      document.getElementById('edit-term').value = paper.term;
-      document.getElementById('edit-year').value = paper.year;
-      document.getElementById('edit-price').value = paper.price;
-      document.getElementById('edit-active').checked = paper.active;
-      document.getElementById('edit-status').style.display = 'none';
+  // ---- Paper list with search and pagination --------------------------
+  // The API returns every paper in one array, so searching and paging happen
+  // here in the browser. Only one page of rows is ever put into the DOM.
+  const listState = { all: [], page: 1, pageSize: 25, query: '', status: 'all' };
+  const papersById = new Map();
 
-      document.getElementById('edit-modal').classList.add('open');
+  function visiblePapers() {
+    const q = listState.query.trim().toLowerCase();
+    return listState.all.filter(p => {
+      if (listState.status === 'active' && !p.active) return false;
+      if (listState.status === 'hidden' && p.active) return false;
+      if (!q) return true;
+      return [p.title, p.subject, p.grade, p.exam_type, p.year, p.price]
+        .some(v => String(v ?? '').toLowerCase().includes(q));
+    });
+  }
+
+  function rowHtml(p) {
+    return `
+      <tr class="${p.active ? '' : 'inactive'}">
+        <td>${escapeHtml(p.title)}</td>
+        <td>${escapeHtml(p.exam_type)}${p.is_bundle ? ' (Bundle)' : ''}</td>
+        <td>${escapeHtml(p.grade)}</td>
+        <td class="num">KES ${escapeHtml(p.price)}</td>
+        <td><span class="badge ${p.active ? 'active' : 'inactive'}">${p.active ? 'Active' : 'Hidden'}</span></td>
+        <td>
+          <div class="row-actions">
+            <button class="btn-pill btn-edit" type="button" data-action="edit" data-id="${escapeHtml(p.id)}">
+              <svg class="i" aria-hidden="true"><use href="#i-edit"/></svg>Edit
+            </button>
+            <button class="btn-pill btn-delete" type="button" data-action="delete" data-id="${escapeHtml(p.id)}">
+              <svg class="i" aria-hidden="true"><use href="#i-trash"/></svg>Delete
+            </button>
+          </div>
+        </td>
+      </tr>`;
+  }
+
+  // 1 … 4 5 [6] 7 8 … 20
+  function pageNumbers(current, last) {
+    const keep = new Set([1, last, current - 1, current, current + 1]);
+    if (current <= 3) { keep.add(2); keep.add(3); }
+    if (current >= last - 2) { keep.add(last - 1); keep.add(last - 2); }
+    const nums = [...keep].filter(n => n >= 1 && n <= last).sort((a, b) => a - b);
+    const out = [];
+    nums.forEach((n, i) => {
+      if (i && n - nums[i - 1] > 1) out.push('…');
+      out.push(n);
+    });
+    return out;
+  }
+
+  function renderList() {
+    const table    = document.getElementById('papers-table');
+    const toolbar  = document.getElementById('list-toolbar');
+    const pagerBar = document.getElementById('pager-bar');
+    const tbody    = document.getElementById('papers-tbody');
+    const listStatus = document.getElementById('papers-status');
+
+    if (listState.all.length === 0) {
+      toolbar.hidden = table.hidden = pagerBar.hidden = true;
+      listStatus.textContent = 'No papers found.';
+      return;
     }
 
-    function closeEditModal() {
-      document.getElementById('edit-modal').classList.remove('open');
+    toolbar.hidden = false;
+    const rows  = visiblePapers();
+    const total = rows.length;
+    const pages = Math.max(1, Math.ceil(total / listState.pageSize));
+    if (listState.page > pages) listState.page = pages;
+    if (listState.page < 1) listState.page = 1;
+
+    if (total === 0) {
+      table.hidden = pagerBar.hidden = true;
+      listStatus.textContent = `No papers match your search (${listState.all.length} in total).`;
+      return;
     }
 
-    async function saveEdit() {
-      const id = document.getElementById('edit-id').value;
-      const status = document.getElementById('edit-status');
+    const start = (listState.page - 1) * listState.pageSize;
+    const slice = rows.slice(start, start + listState.pageSize);
+    tbody.innerHTML = slice.map(rowHtml).join('');
+    table.hidden = false;
 
-      const payload = {
-        title: document.getElementById('edit-title').value,
-        exam_type: document.getElementById('edit-exam_type').value,
-        term: document.getElementById('edit-term').value,
-        year: document.getElementById('edit-year').value,
-        price: document.getElementById('edit-price').value,
-        active: document.getElementById('edit-active').checked,
-      };
+    listStatus.textContent = total === listState.all.length
+      ? `${total} paper(s) loaded.`
+      : `${total} of ${listState.all.length} paper(s) match.`;
 
-      try {
-        const res = await fetch(`${API_BASE}/admin/papers/${id}`, {
-          method: 'PATCH',
-          headers: {
-            Authorization: authHeader(),
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Update failed');
+    document.getElementById('pager-info').textContent =
+      `Showing ${start + 1}–${start + slice.length} of ${total}`;
 
-        closeEditModal();
-        loadPapers();
-      } catch (err) {
-        status.className = 'err';
-        status.textContent = 'Error: ' + err.message;
-        status.style.display = 'block';
-      }
+    const cur = listState.page;
+    const btn = (label, page, { disabled = false, current = false, aria = '' } = {}) =>
+      `<button type="button" data-page="${page}" ${disabled ? 'disabled' : ''} ${current ? 'class="current" aria-current="page"' : ''} ${aria ? `aria-label="${aria}"` : ''}>${label}</button>`;
+    const icon = id => `<svg class="i" aria-hidden="true"><use href="#${id}"/></svg>`;
+
+    pagerBar.hidden = pages === 1;
+    document.getElementById('pager').innerHTML =
+      btn(icon('i-first'), 1,       { disabled: cur === 1,     aria: 'First page' }) +
+      btn(icon('i-left'),  cur - 1, { disabled: cur === 1,     aria: 'Previous page' }) +
+      pageNumbers(cur, pages).map(n =>
+        n === '…' ? '<span class="gap">…</span>' : btn(n, n, { current: n === cur, aria: `Page ${n}` })
+      ).join('') +
+      btn(icon('i-right'), cur + 1, { disabled: cur === pages, aria: 'Next page' }) +
+      btn(icon('i-last'),  pages,   { disabled: cur === pages, aria: 'Last page' });
+  }
+
+  async function loadPapers() {
+    const listStatus = document.getElementById('papers-status');
+
+    if (!document.getElementById('admin-user').value || !document.getElementById('admin-pass').value) {
+      listStatus.textContent = 'Enter admin credentials above first.';
+      return;
     }
-  </script>
+
+    listStatus.textContent = 'Loading…';
+
+    try {
+      const res = await fetch(`${API_BASE}/admin/papers`, {
+        headers: { Authorization: authHeader() },
+      });
+      if (!res.ok) throw new Error('Failed to load papers (check credentials)');
+      const papers = await res.json();
+
+      listState.all = papers;
+      papersById.clear();
+      papers.forEach(p => papersById.set(String(p.id), p));
+      renderList();
+    } catch (err) {
+      document.getElementById('papers-table').hidden = true;
+      document.getElementById('pager-bar').hidden = true;
+      listStatus.textContent = 'Error: ' + err.message;
+    }
+  }
+
+  // Row buttons and pager buttons (event delegation, so no inline handlers)
+  document.getElementById('papers-tbody').addEventListener('click', e => {
+    const b = e.target.closest('button[data-action]');
+    if (!b) return;
+    if (b.dataset.action === 'edit') openEditModal(b.dataset.id);
+    if (b.dataset.action === 'delete') deletePaper(b.dataset.id);
+  });
+
+  document.getElementById('pager').addEventListener('click', e => {
+    const b = e.target.closest('button[data-page]');
+    if (!b || b.disabled) return;
+    listState.page = parseInt(b.dataset.page, 10);
+    renderList();
+    document.getElementById('papers-status').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  let searchTimer;
+  document.getElementById('search').addEventListener('input', e => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      listState.query = e.target.value;
+      listState.page = 1;
+      renderList();
+    }, 200);
+  });
+  document.getElementById('status-filter').addEventListener('change', e => {
+    listState.status = e.target.value;
+    listState.page = 1;
+    renderList();
+  });
+  document.getElementById('page-size').addEventListener('change', e => {
+    listState.pageSize = parseInt(e.target.value, 10);
+    listState.page = 1;
+    renderList();
+  });
+  document.getElementById('admin-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') loadPapers();
+  });
+
+  // Eye icon: show or hide the admin password
+  document.getElementById('pass-toggle').addEventListener('click', e => {
+    const input = document.getElementById('admin-pass');
+    const btn = e.currentTarget;
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', String(show));
+    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    input.focus();
+  });
+
+  // ---- Delete ---------------------------------------------------------
+  async function deletePaper(id) {
+    const paper = papersById.get(String(id));
+    const title = paper ? paper.title : `#${id}`;
+    if (!confirm(`Delete "${title}"? This hides it from buyers immediately.`)) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/admin/papers/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: { Authorization: authHeader() },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Delete failed');
+      loadPapers();                // stays on the current page
+    } catch (err) {
+      alert('Error deleting paper: ' + err.message);
+    }
+  }
+
+  // ---- Edit -----------------------------------------------------------
+  function openEditModal(id) {
+    const paper = papersById.get(String(id));
+    if (!paper) return;
+
+    document.getElementById('edit-id').value = paper.id;
+    document.getElementById('edit-title').value = paper.title;
+
+    // Papers uploaded with an older type name (e.g. "Mid Term") are not in the
+    // new list. Add it as an option so saving does not silently change it.
+    const typeSelect = document.getElementById('edit-exam_type');
+    Array.from(typeSelect.querySelectorAll('option[data-legacy]')).forEach(o => o.remove());
+    if (paper.exam_type && !everyType().includes(paper.exam_type)) {
+      const legacy = document.createElement('option');
+      legacy.value = paper.exam_type;
+      legacy.textContent = `${paper.exam_type} (old name)`;
+      legacy.setAttribute('data-legacy', '');
+      typeSelect.appendChild(legacy);
+    }
+    typeSelect.value = paper.exam_type;
+
+    const termSelect = document.getElementById('edit-term');
+    Array.from(termSelect.querySelectorAll('option[data-legacy]')).forEach(o => o.remove());
+    if (paper.term != null && !Array.from(termSelect.options).some(o => o.value === String(paper.term))) {
+      const legacyTerm = document.createElement('option');
+      legacyTerm.value = paper.term;
+      legacyTerm.textContent = String(paper.term);
+      legacyTerm.setAttribute('data-legacy', '');
+      termSelect.appendChild(legacyTerm);
+    }
+    termSelect.value = paper.term;
+    document.getElementById('edit-year').value = paper.year;
+    document.getElementById('edit-price').value = paper.price;
+    document.getElementById('edit-active').checked = paper.active;
+    document.getElementById('edit-status').style.display = 'none';
+
+    document.getElementById('edit-modal').classList.add('open');
+    document.getElementById('edit-title').focus();
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeEditModal();
+  });
+  document.getElementById('edit-modal').addEventListener('click', e => {
+    if (e.target.id === 'edit-modal') closeEditModal();
+  });
+
+  async function saveEdit() {
+    const id = document.getElementById('edit-id').value;
+    const status = document.getElementById('edit-status');
+
+    const payload = {
+      title: document.getElementById('edit-title').value,
+      exam_type: document.getElementById('edit-exam_type').value,
+      term: document.getElementById('edit-term').value,
+      year: document.getElementById('edit-year').value,
+      price: document.getElementById('edit-price').value,
+      active: document.getElementById('edit-active').checked,
+    };
+
+    try {
+      const res = await fetch(`${API_BASE}/admin/papers/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: authHeader(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Update failed');
+
+      closeEditModal();
+      loadPapers();                // stays on the current page
+    } catch (err) {
+      status.className = 'err';
+      status.textContent = 'Error: ' + err.message;
+      status.style.display = 'block';
+    }
+  }
+</script>
 </body>
 </html>
